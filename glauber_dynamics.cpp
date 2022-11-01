@@ -1,3 +1,7 @@
+/*
+https://en.wikipedia.org/wiki/Glauber_dynamics
+*/
+
 // #include <iostream>
 #include <cstdio>
 #include <cstdlib>
@@ -62,21 +66,21 @@ int neighbor_sum(int index, char grid[], int grid_dim) {
         return_me += get_val(index + grid_dim, grid, grid_dim);
     if (index / grid_dim > 0)
         return_me += get_val(index - grid_dim, grid, grid_dim);
-    printf("Sum at (%d,%d): %d\n", index / grid_dim, index % grid_dim, return_me);
     return return_me;
 }
 
 int main(int argc, char** argv) {
-    int grid_dim, grid_size;
+    int grid_dim, grid_size, delta_e, iterations;
     char* grid;
     
-    if (argc < 2) {
-        printf("usage: executable grid-dim\n");
+    if (argc < 3) {
+        printf("usage: executable grid-dim iterations\n");
         exit(1);
     }
     
     grid_dim = atoi(argv[1]);
     grid_size = grid_dim * grid_dim;
+    iterations = atoi(argv[2]);
     grid = new char[grid_size];
 
     printf("hello there!\n");
@@ -84,8 +88,11 @@ int main(int argc, char** argv) {
     shuffle(grid, grid_dim);
     print_grid(grid, grid_dim);
 
-    for (int i = -1; i < grid_size + 1; i++) {
-        neighbor_sum(i, grid, grid_dim);
+
+    int rand_index;
+    for (int i = 0; i < iterations; i++) {
+        rand_index = choose_point(grid_dim);
+        printf("Sum at (%d,%d): %d\n", rand_index / grid_dim, rand_index % grid_dim, neighbor_sum(rand_index, grid, grid_dim));
     }
     
     delete[] grid;
