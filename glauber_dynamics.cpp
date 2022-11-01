@@ -27,11 +27,43 @@ void shuffle(char grid[], int grid_dim) {
     }
 }
 
+int get_val(int index, char grid[], int& grid_dim) {
+    if (index < 0 || index >= (grid_dim * grid_dim)) {
+        printf("Attempted to access value at out-of-bounds index\n");
+        exit(1);
+    } else if (grid[index] == '+') {
+        return 1;
+    } else {
+        return -1;
+    }
+}
+
 int choose_point(int grid_dim) {
+    int return_me;
     unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
     std::default_random_engine generator(seed);
     std::uniform_real_distribution<double> distribution(0.0, grid_dim * grid_dim);
-    return (int)distribution(generator);
+    return_me = (int)distribution(generator);
+    // printf("random from [0, %d): %d\n", grid_size, return_me);
+    return return_me;
+}
+
+int neighbor_sum(int index, char grid[], int grid_dim) {
+    int return_me = 0;
+    if (index < 0 || index >= (grid_dim * grid_dim)) {
+        printf("Attempted to sum neighbors for out-of-bounds index\n");
+        exit(1);
+    }
+    if (index % grid_dim < (grid_dim - 1))
+        return_me += get_val(index + 1, grid, grid_dim);
+    if (index % grid_dim > 0)
+        return_me += get_val(index - 1, grid, grid_dim);
+    if (index / grid_dim < (grid_dim - 1))
+        return_me += get_val(index + grid_dim, grid, grid_dim);
+    if (index / grid_dim > 0)
+        return_me += get_val(index - grid_dim, grid, grid_dim);
+    printf("Sum at (%d,%d): %d\n", index / grid_dim, index % grid_dim, return_me);
+    return return_me;
 }
 
 int main(int argc, char** argv) {
@@ -45,14 +77,17 @@ int main(int argc, char** argv) {
     
     grid_dim = atoi(argv[1]);
     grid_size = grid_dim * grid_dim;
-    grid = new char[grid_dim];
+    grid = new char[grid_size];
 
     printf("hello there!\n");
     
     shuffle(grid, grid_dim);
     print_grid(grid, grid_dim);
 
-    printf("random from [0, %d): %d\n", grid_size, choose_point(3));
+    for (int i = -1; i < grid_size + 1; i++) {
+        neighbor_sum(i, grid, grid_dim);
+    }
     
+    delete[] grid;
     return 0;
 }
