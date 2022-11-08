@@ -107,12 +107,23 @@ int flip(int index, int grid[], int grid_dim, double& beta) {
     double prob_p = std::exp(beta_p) / (std::exp(beta_n) + std::exp(beta_p));
     
     double rand = distribution(generator);
-    printf("rand %f prob_p %f prob_n %f\n", rand, prob_p, 1 - prob_p);
+    // printf("rand %f prob_p %f prob_n %f\n", rand, prob_p, 1 - prob_p);
     if (rand >= prob_p) {
         return 1;
     } else {
         return -1;
     }
+}
+
+int* flip_all(int grid[], int grid_dim, double& beta) {
+    if (grid == NULL) {
+        return NULL;
+    }
+    int* new_grid = new int[grid_dim * grid_dim];
+    for (int i = 0; i < (grid_dim * grid_dim); i++) {
+        new_grid[i] = flip(i, grid, grid_dim, beta);
+    }
+    return new_grid;
 }
 
 int main(int argc, char** argv) {
@@ -148,11 +159,12 @@ int main(int argc, char** argv) {
     print_grid(grid, grid_dim);
 
 
-    int rand_index;
+    int* new_grid;
     for (int i = 0; i < iterations; i++) {
-        // rand_index = choose_point(grid_dim);
-        // printf("Sum at (%d,%d): %d\n", rand_index / grid_dim, rand_index % grid_dim, neighbor_sum(rand_index, grid, grid_dim));
-        flip(choose_point(grid_dim), grid, grid_dim, beta);
+        new_grid = flip_all(grid, grid_dim, beta);
+        delete[] grid;
+        grid = new_grid;
+        print_grid(grid, grid_dim);
     }
 
     delete[] grid;
