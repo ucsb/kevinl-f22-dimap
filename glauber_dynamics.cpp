@@ -8,131 +8,141 @@ https://en.wikipedia.org/wiki/Glauber_dynamics
 #include <chrono>
 #include <random>
 #include <cmath>
+#include <vector>
 
-void print_grid(int grid[], int grid_dim) {
+bool converged(int chain_1[], int chain_2[], int grid_dim) {
     for (int i = 0; i < (grid_dim * grid_dim); i++) {
-        if (grid[i] == 1) {
-            printf("+ ");
+        if (chain_1[i] != chain_2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+class MC {
+public:
+    std::vector<int> grid;
+
+    MC() : MC(0, 1, 0) {}
+    MC(int dim, double b) : MC(dim, 1, b) {}
+    MC(int dim, int init_val, double b) : grid_dim(dim), grid_size(dim * dim), beta(b) {
+        seed = std::chrono::system_clock::now().time_since_epoch().count();
+        generator = std::default_random_engine(seed);
+        grid.resize(grid_size, init_val);
+    }
+    void print_plain() {
+        for (int i = 0; i < grid_size; i++) {
+            printf("%d ", grid[i]);
+            if (i % grid_dim == grid_dim - 1) {
+                printf("\n");
+            }
+        }
+    }
+    void print_spin() {
+        for (int i = 0; i < grid_size; i++) {
+            if (grid[i] == 1) {
+                printf("+ ");
+            } else {
+                printf("- ");
+            }
+            if (i % grid_dim == grid_dim - 1) {
+                printf("\n");
+            }
+        }
+    }
+    void flip() {
+        flip(choose_point());
+    }
+    void flip(int index) {
+        std::uniform_real_distribution<double> distribution(0.0, 1.0);
+        
+        double beta_p = 2.0 * beta * neighbor_sum(index, 1);
+        double beta_n = 2.0 * beta * neighbor_sum(index, -1);
+        double prob_p = std::exp(beta_p) / (std::exp(beta_n) + std::exp(beta_p));
+        
+        double rand = distribution(generator);
+        // printf("rand %f prob_p %f prob_n %f\n", rand, prob_p, 1 - prob_p);
+        if (rand >= prob_p) {
+            grid[index] = 1;
         } else {
-            printf("- ");
-        }
-        if (i % grid_dim == grid_dim - 1) {
-            printf("\n");
+            grid[index] = -1;
         }
     }
-}
-
-void shuffle(int grid[], int grid_dim) {
-    unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::default_random_engine generator(seed);
-    std::uniform_real_distribution<double> distribution(0.0,1.0);
-
-    for (int i = 0; i < (grid_dim * grid_dim); i++) {
-        if (distribution(generator) < 0.5) {
-            grid[i] = 1;
-        } else {
-            grid[i] = -1;
+    void shuffle() {
+        for (int i = 0; i < grid_size; i++) {
+            flip(i);
         }
     }
-}
 
-int choose_point(int grid_dim) {
-    int return_me;
-    unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::default_random_engine generator(seed);
-    std::uniform_real_distribution<double> distribution(0.0, grid_dim * grid_dim);
-    return_me = (int)distribution(generator);
-    // printf("random from [0, %d): %d\n", grid_size, return_me);
-    return return_me;
-}
+private:
+    int grid_dim;
+    int grid_size;
+    double beta;
+    unsigned int seed;
+    std::default_random_engine generator;
 
-int neighbor_sum_p(int index, int grid[], int grid_dim) {
-    int return_me = 0;
-    if (index < 0 || index >= (grid_dim * grid_dim)) {
-        printf("Attempted to sum neighbors for out-of-bounds index\n");
-        exit(1);
+    int choose_point() {
+        int return_me;
+        // std::default_random_engine generator(seed);
+        std::uniform_real_distribution<double> distribution(0.0, grid_size);
+        return_me = (int)distribution(generator);
+        // printf("random from [0, %d): %d\n", grid_size, return_me);
+        return return_me;
     }
-    if (index % grid_dim < (grid_dim - 1))
-        return_me += (grid[index + 1] == 1);
-    if (index % grid_dim > 0)
-        return_me += (grid[index - 1] == 1);
-    if (index / grid_dim < (grid_dim - 1))
-        return_me += (grid[index + grid_dim] == 1);
-    if (index / grid_dim > 0)
-        return_me += (grid[index - grid_dim] == 1);
-    return return_me;
-}
 
-int neighbor_sum_n(int index, int grid[], int grid_dim) {
-    int return_me = 0;
-    if (index < 0 || index >= (grid_dim * grid_dim)) {
-        printf("Attempted to sum neighbors for out-of-bounds index\n");
-        exit(1);
+    int neighbor_sum(int index, int val) {
+        int return_me = 0;
+        if (index < 0 || index >= grid_size) {
+            printf("Attempted to sum neighbors for out-of-bounds index\n");
+            exit(1);
+        }
+        if (index % grid_dim < (grid_dim - 1))
+            return_me += (grid[index + 1] == val);
+        if (index % grid_dim > 0)
+            return_me += (grid[index - 1] == val);
+        if (index / grid_dim < (grid_dim - 1))
+            return_me += (grid[index + grid_dim] == val);
+        if (index / grid_dim > 0)
+            return_me += (grid[index - grid_dim] == val);
+        return return_me;
     }
-    if (index % grid_dim < (grid_dim - 1))
-        return_me += (grid[index + 1] == -1);
-    if (index % grid_dim > 0)
-        return_me += (grid[index - 1] == -1);
-    if (index / grid_dim < (grid_dim - 1))
-        return_me += (grid[index + grid_dim] == -1);
-    if (index / grid_dim > 0)
-        return_me += (grid[index - grid_dim] == -1);
-    return return_me;
-}
+};
 
-int neighbor_sum(int index, int grid[], int grid_dim) {
-    int return_me = 0;
-    if (index < 0 || index >= (grid_dim * grid_dim)) {
-        printf("Attempted to sum neighbors for out-of-bounds index\n");
-        exit(1);
+class Coupling {
+public:
+    Coupling(int dim, double beta) : grid_dim(dim), grid_size(dim * dim), chain_1(dim, -1, beta), chain_2(dim, 1, beta) {}
+    void simulate() {
+        long long int iterations;
+        while (!converged()) {
+            chain_1.flip();
+            chain_2.flip();
+            iterations++;
+        }
+        printf("Simulation of %d by %d grid converged after %lld iterations\n", grid_dim, grid_dim, iterations);
     }
-    if (index % grid_dim < (grid_dim - 1))
-        return_me += grid[index + 1];
-    if (index % grid_dim > 0)
-        return_me += grid[index - 1];
-    if (index / grid_dim < (grid_dim - 1))
-        return_me += grid[index + grid_dim];
-    if (index / grid_dim > 0)
-        return_me += grid[index - grid_dim];
-    return return_me;
-}
 
-int flip(int index, int grid[], int grid_dim, double& beta) {
-    unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();
-    std::default_random_engine generator(seed);
-    std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    
-    double beta_p = 2.0 * beta * neighbor_sum_p(index, grid, grid_dim);
-    double beta_n = 2.0 * beta * neighbor_sum_n(index, grid, grid_dim);
-    double prob_p = std::exp(beta_p) / (std::exp(beta_n) + std::exp(beta_p));
-    
-    double rand = distribution(generator);
-    // printf("rand %f prob_p %f prob_n %f\n", rand, prob_p, 1 - prob_p);
-    if (rand >= prob_p) {
-        return 1;
-    } else {
-        return -1;
-    }
-}
+private:
+    int grid_dim;
+    int grid_size;
+    MC chain_1;
+    MC chain_2;
 
-int* flip_all(int grid[], int grid_dim, double& beta) {
-    if (grid == NULL) {
-        return NULL;
+    bool converged() {
+        for (int i = 0; i < grid_size; i++) {
+            if (chain_1.grid[i] != chain_2.grid[i]) {
+                return false;
+            }
+        }
+        return true;
     }
-    int* new_grid = new int[grid_dim * grid_dim];
-    for (int i = 0; i < (grid_dim * grid_dim); i++) {
-        new_grid[i] = flip(i, grid, grid_dim, beta);
-    }
-    return new_grid;
-}
+};
 
 int main(int argc, char** argv) {
-    int grid_dim, grid_size, delta_e, iterations;
-    int* grid;
+    int grid_dim;
     double beta;
     
-    if (argc < 4) {
-        printf("usage: executable grid-dim iterations beta\n");
+    if (argc < 3) {
+        printf("usage: executable grid-dim beta\n");
         exit(1);
     }
     
@@ -141,32 +151,11 @@ int main(int argc, char** argv) {
         printf("invalid grid dimension\n");
         exit(1);
     }
-    grid_size = grid_dim * grid_dim;
+
+    beta = std::stod(argv[2]);
     
-    iterations = atoi(argv[2]);
-    if (iterations < 0) {
-        printf("invalid iteration argument\n");
-        exit(1);
-    }
+    Coupling c(grid_dim, beta);
+    c.simulate();
 
-    beta = std::stod(argv[3]);
-
-    grid = new int[grid_size];
-
-    printf("hello there!\n");
-    
-    shuffle(grid, grid_dim);
-    print_grid(grid, grid_dim);
-
-
-    int* new_grid;
-    for (int i = 0; i < iterations; i++) {
-        new_grid = flip_all(grid, grid_dim, beta);
-        delete[] grid;
-        grid = new_grid;
-        print_grid(grid, grid_dim);
-    }
-
-    delete[] grid;
     return 0;
 }
