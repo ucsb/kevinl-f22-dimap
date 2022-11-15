@@ -3,47 +3,7 @@ https://en.wikipedia.org/wiki/Glauber_dynamics
 */
 
 // #include <iostream>
-#include <cstdio>
-#include <cstdlib>
-#include "mc.hpp"
-
-bool converged(int chain_1[], int chain_2[], int grid_dim) {
-    for (int i = 0; i < (grid_dim * grid_dim); i++) {
-        if (chain_1[i] != chain_2[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-class Coupling {
-public:
-    Coupling(int dim, double beta) : grid_dim(dim), grid_size(dim * dim), chain_1(dim, -1, beta), chain_2(dim, 1, beta) {}
-    void simulate() {
-        long long int iterations;
-        while (!converged()) {
-            chain_1.flip();
-            chain_2.flip();
-            iterations++;
-        }
-        printf("Simulation of %d by %d grid converged after %lld iterations\n", grid_dim, grid_dim, iterations);
-    }
-
-private:
-    int grid_dim;
-    int grid_size;
-    MC chain_1;
-    MC chain_2;
-
-    bool converged() {
-        for (int i = 0; i < grid_size; i++) {
-            if (chain_1.grid[i] != chain_2.grid[i]) {
-                return false;
-            }
-        }
-        return true;
-    }
-};
+#include "coupling.hpp"
 
 int main(int argc, char** argv) {
     int grid_dim;
