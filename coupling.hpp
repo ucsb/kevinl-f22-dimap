@@ -3,6 +3,7 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <pthread.h>
 #include "glauber.hpp"
 
 class Coupling {
@@ -15,6 +16,7 @@ private:
     int grid_size;
     Glauber chain_1;
     Glauber chain_2;
+    pthread_t ptid_1, ptid_2;
     bool converged();
 };
 

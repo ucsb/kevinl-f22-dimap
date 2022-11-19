@@ -21,6 +21,7 @@ public:
     void print_spin();
     void flip();
     void flip(int index);
+    static void* pt_flip(void* pt_arg);
     void shuffle();
 
 private:

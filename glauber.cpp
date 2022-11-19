@@ -66,6 +66,11 @@ void Glauber::flip(int index) {
         grid[index] = NEGATIVE;
     }
 }
+void* Glauber::pt_flip(void* pt_arg) {
+    ((Glauber*)pt_arg)->flip();
+    printf("Glauber %p done\n", pt_arg);
+    return NULL;
+}
 void Glauber::shuffle() {
     for (int i = 0; i < grid_size; i++) {
         flip(i);
