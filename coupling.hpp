@@ -3,7 +3,7 @@
 
 #include <cstdio>
 #include <cstdlib>
-#include "mc.hpp"
+#include "glauber.hpp"
 
 class Coupling {
 public:
@@ -13,8 +13,8 @@ public:
 private:
     int grid_dim;
     int grid_size;
-    MC chain_1;
-    MC chain_2;
+    Glauber chain_1;
+    Glauber chain_2;
     bool converged();
 };
 

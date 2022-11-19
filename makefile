@@ -2,14 +2,14 @@ EXECS: ising
 
 all: $(EXECS)
 
-mc.o: mc.hpp mc.cpp
-	g++ -Wall -pedantic -c -o mc.o mc.cpp
+glauber.o: glauber.hpp glauber.cpp
+	g++ -Wall -pedantic -c -o glauber.o glauber.cpp
 
 coupling.o: coupling.hpp coupling.cpp
 	g++ -Wall -pedantic -c -o coupling.o coupling.cpp
 
-ising: glauber_dynamics.cpp coupling.hpp coupling.o mc.hpp mc.o
-	g++ -Wall -pedantic -o ising glauber_dynamics.cpp coupling.o mc.o
+ising: ising.cpp coupling.hpp coupling.o glauber.hpp glauber.o
+	g++ -Wall -pedantic -o ising ising.cpp coupling.o glauber.o
 
 clean:
 	/bin/rm -f *.o core ising

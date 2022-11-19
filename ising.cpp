@@ -2,7 +2,6 @@
 https://en.wikipedia.org/wiki/Glauber_dynamics
 */
 
-// #include <iostream>
 #include "coupling.hpp"
 
 int main(int argc, char** argv) {

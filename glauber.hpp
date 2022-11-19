@@ -1,17 +1,22 @@
-#ifndef MC_H
-#define MC_H
+#ifndef GLAUBER_H
+#define GLAUBER_H
 
 #include <chrono>
 #include <random>
 #include <cmath>
-#include <vector>
+#include <cstring>
 
-class MC {
+#define POSITIVE 1
+#define NEGATIVE 0
+
+class Glauber {
 public:
-    std::vector<int> grid;
-    MC();
-    MC(int dim, double b);
-    MC(int dim, int init_val, double b);
+    bool* grid = NULL;
+    Glauber();
+    Glauber(int dim, double b);
+    Glauber(int dim, bool init_spin, double b);
+    ~Glauber();
+    Glauber& operator=(const Glauber& other);
     void print_plain();
     void print_spin();
     void flip();

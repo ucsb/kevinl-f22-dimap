@@ -1,6 +1,7 @@
 #include "coupling.hpp"
 
-Coupling::Coupling(int dim, double beta) : grid_dim(dim), grid_size(dim * dim), chain_1(dim, -1, beta), chain_2(dim, 1, beta) {}
+Coupling::Coupling(int dim, double beta):
+grid_dim(dim), grid_size(dim * dim), chain_1(dim, NEGATIVE, beta), chain_2(dim, POSITIVE, beta) {}
 
 void Coupling::simulate() {
     long long int iterations;
