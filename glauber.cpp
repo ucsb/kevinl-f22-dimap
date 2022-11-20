@@ -68,7 +68,7 @@ void Glauber::flip(int index) {
 }
 void* Glauber::pt_flip(void* pt_arg) {
     ((Glauber*)pt_arg)->flip();
-    printf("Glauber %p done\n", pt_arg);
+    // printf("Glauber %p done\n", pt_arg);
     return NULL;
 }
 void Glauber::shuffle() {

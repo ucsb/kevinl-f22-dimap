@@ -1,4 +1,4 @@
-EXECS: ising
+EXECS: ising benchmark
 
 all: $(EXECS)
 
@@ -11,5 +11,8 @@ coupling.o: coupling.hpp coupling.cpp
 ising: ising.cpp coupling.hpp coupling.o glauber.hpp glauber.o
 	g++ -Wall -pedantic -o ising ising.cpp coupling.o glauber.o -lpthread
 
+benchmark: benchmark.cpp coupling.hpp coupling.o glauber.hpp glauber.o
+	g++ -Wall -pedantic -o benchmark benchmark.cpp coupling.o glauber.o -lpthread
+
 clean:
-	/bin/rm -f *.o core ising
+	/bin/rm -f *.o core ising benchmark
