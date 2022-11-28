@@ -12,6 +12,7 @@
 class Glauber {
 public:
     bool* grid = NULL;
+    double beta = 0.0f;
     Glauber();
     Glauber(int dim, double b);
     Glauber(int dim, bool init_spin, double b);
@@ -26,9 +27,6 @@ public:
 private:
     int grid_dim;
     int grid_size;
-    double beta;
-    unsigned int seed;
-    std::default_random_engine generator;
     int choose_point();
     int neighbor_sum(int index, int val);
 };

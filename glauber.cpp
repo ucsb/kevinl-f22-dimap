@@ -1,10 +1,12 @@
 #include "glauber.hpp"
 
+unsigned int seed = std::chrono::system_clock::now().time_since_epoch().count();;
+std::default_random_engine generator = std::default_random_engine(seed);
+std::uniform_real_distribution<double> normal(0.0, 1.0);
+
 Glauber::Glauber() : Glauber(0, 1, 0) {}
 Glauber::Glauber(int dim, double b) : Glauber(dim, 1, b) {}
-Glauber::Glauber(int dim, bool init_spin, double b): grid_dim(dim), grid_size(dim * dim), beta(b) {
-    seed = std::chrono::system_clock::now().time_since_epoch().count();
-    generator = std::default_random_engine(seed);
+Glauber::Glauber(int dim, bool init_spin, double b): beta(b), grid_dim(dim), grid_size(dim * dim) {
     if (grid_size > 0) {
         grid = new bool[grid_size];
         for (int i = 0; i < grid_size; i++) {
@@ -16,16 +18,14 @@ Glauber::~Glauber() {
     delete[] grid;
 }
 Glauber& Glauber::operator=(const Glauber& other) {
-    if (grid_dim != other.grid_dim) {
-        printf("Bad assignment: cannot assign grids of different dimensions\n");
-        exit(1);
-    }
     delete[] grid;
-    grid = new bool[grid_size];
-    memcpy(grid, other.grid, grid_size);
+    grid = new bool[other.grid_size];
+    for (int i = 0; i < other.grid_size; i++) {
+        grid[i] = other.grid[i];
+    }
     beta = other.beta;
-    seed = other.seed;
-    generator = other.generator;
+    grid_dim = other.grid_dim;
+    grid_size = other.grid_size;
     return *this;
 }
 void Glauber::print_plain() {
@@ -52,15 +52,12 @@ void Glauber::flip() {
     flip(choose_point());
 }
 void Glauber::flip(int index) {
-    std::uniform_real_distribution<double> distribution(0.0, 1.0);
-
-    double beta_p = 2.0 * beta * neighbor_sum(index, POSITIVE);
-    double beta_n = 2.0 * beta * neighbor_sum(index, NEGATIVE);
+    int num_p = neighbor_sum(index, POSITIVE);
+    double beta_p = 2.0 * beta * num_p;
+    double beta_n = 2.0 * beta * (4 - num_p);
     double prob_p = std::exp(beta_p) / (std::exp(beta_n) + std::exp(beta_p));
-
-    double rand = distribution(generator);
-    // printf("rand %f prob_p %f prob_n %f\n", rand, prob_p, 1 - prob_p);
-    if (rand >= prob_p) {
+    double rand = normal(generator);
+    if (rand <= prob_p) {
         grid[index] = POSITIVE;
     } else {
         grid[index] = NEGATIVE;
@@ -72,11 +69,7 @@ void Glauber::shuffle() {
     }
 }
 int Glauber::choose_point() {
-    int return_me;
-    std::uniform_real_distribution<double> distribution(0.0, grid_size);
-    return_me = (int)distribution(generator);
-    // printf("random from [0, %d): %d\n", grid_size, return_me);
-    return return_me;
+    return (int)(normal(generator) * grid_size);;
 }
 
 int Glauber::neighbor_sum(int index, int val) {
