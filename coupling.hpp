@@ -3,12 +3,16 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <climits>
 #include "glauber.hpp"
 
 class Coupling {
 public:
+    Coupling();
+    Coupling(int dim);
     Coupling(int dim, double beta);
-    void simulate();
+    bool simulate(unsigned int& iterations, unsigned int max);
+    void print_spin();
 
 private:
     int grid_dim;

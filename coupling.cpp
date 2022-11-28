@@ -1,16 +1,18 @@
 #include "coupling.hpp"
 
+Coupling::Coupling(): Coupling(0, 0) {}
+Coupling::Coupling(int dim): Coupling(dim, 0) {}
 Coupling::Coupling(int dim, double beta):
 grid_dim(dim), grid_size(dim * dim), chain_1(dim, NEGATIVE, beta), chain_2(dim, POSITIVE, beta) {}
 
-void Coupling::simulate() {
-    long long int iterations;
-    while (!converged()) {
+bool Coupling::simulate(unsigned int& iterations, unsigned int max) {
+    iterations = 0;
+    while (!converged() && iterations < max) {
         chain_1.flip();
         chain_2.flip();
         iterations++;
     }
-    printf("Simulation of %d by %d grid converged after %lld iterations\n", grid_dim, grid_dim, iterations);
+    return converged();
 }
 
 bool Coupling::converged() {
@@ -20,4 +22,9 @@ bool Coupling::converged() {
         }
     }
     return true;
+}
+
+void Coupling::print_spin() {
+    chain_1.print_spin();
+    chain_2.print_spin();
 }
