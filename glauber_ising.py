@@ -4,88 +4,88 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 
-if len(sys.argv) > 3 or len(sys.argv) < 2:
-    sys.exit("Usage: glauber_ising.py grid_dim max_iterations(optional)")
-
-dim = int(sys.argv[1])
-shape = (dim, dim)
-beta = 0.0
-max_iters = None
-if len(sys.argv) == 3:
-    max_iters = int(sys.argv[2])
-
-random.seed(None)
-
-def shuffle_grid(grid, grid_dim):
-    for i in range(grid_dim):
-        for j in range(grid_dim):
+def shuffle_grid(grid):
+    h,w = grid.shape
+    for i in range(w):
+        for j in range(h):
             grid[j, i] = (int)(random.uniform(0.0, 1.0) <= 0.5)
 
-def choose_point(grid_dim):
-    x = (int)(random.uniform(0.0, 1.0) * grid_dim)
-    y = (int)(random.uniform(0.0, 1.0) * grid_dim)
+def choose_point(shape):
+    h,w = shape
+    x = (int)(random.uniform(0.0, 1.0) * w)
+    y = (int)(random.uniform(0.0, 1.0) * h)
     return (y, x)
 
-def sum_neighbors(grid, grid_dim, coords):
+def sum_neighbors(grid, coords):
+    h,w = grid.shape
     y,x = coords
     sums = [0, 0]
-    sums[grid[(y - 1) % grid_dim, x]] += 1
-    sums[grid[(y + 1) % grid_dim, x]] += 1
-    sums[grid[y, (x - 1) % grid_dim]] += 1
-    sums[grid[y, (x + 1) % grid_dim]] += 1
+    sums[grid[(y - 1) % h, x]] += 1
+    sums[grid[(y + 1) % h, x]] += 1
+    sums[grid[y, (x - 1) % w]] += 1
+    sums[grid[y, (x + 1) % w]] += 1
     return sums
 
-def flip(grid, grid_dim, debug=False):
-    (y,x) = choose_point(grid_dim)
-    sums = sum_neighbors(grid, grid_dim, (y,x)) # negative, positive
+def flip(grid, beta, coords, rand):
+    sums = sum_neighbors(grid, coords)
     beta_p = 2.0 * beta * sums[1]
     beta_n = 2.0 * beta * sums[0]
     prob_p = exp(beta_p) / (exp(beta_n) + exp(beta_p))
-    if (random.uniform(0.0, 1.0) <= prob_p):
-        if debug:
-            print("flip ({:d}, {:d}) {:d} -> {:d}".format(y, x, grid[y, x], 1), end='\r')
-        grid[y, x] = 1
-    else:
-        if debug:
-            print("flip ({:d}, {:d}) {:d} -> {:d}".format(y, x, grid[y, x], 0), end='\r')
-        grid[y, x] = 0
+    grid[coords[0], coords[1]] = (rand <= prob_p)
 
-def simulate(max=None, debug=False):
-    grid1 = np.zeros(shape, dtype=np.int8)
-    grid2 = np.ones(shape, dtype=np.int8)
-    if max == None:
-        steps = 0
-        while not np.array_equal(grid1, grid2):
-            flip(grid1, dim, debug)
-            flip(grid2, dim, debug)
-            steps += 1
-        return steps
-    else:
-        for i in range(max):
-            flip(grid1, dim, debug)
-            flip(grid2, dim, debug)
-            if np.array_equal(grid1, grid2):
-                return i
-        return max
+def side_by_side(grid1, grid2):
+    if grid1.shape != grid2.shape:
+        exit("Printing spins with incompatible transition matrix")
+    for i in range(len(grid1)):
+        print(grid1[i], grid2[i])
+
+def simulate(shape, beta, max=None):
+    steps = 0
+    ones = np.full(shape, 1, dtype=np.int8)
+    zeroes = np.full(shape, 0, dtype=np.int8)
+    while not np.array_equal(ones, zeroes):
+        point = choose_point(shape=shape)
+        rand = random.uniform(0.0, 1.0)
+        flip(ones, beta, coords=point, rand=rand)
+        flip(zeroes, beta, coords=point, rand=rand)
+        steps += 1
+        if steps == max:
+            break
+    return steps, np.array_equal(ones, zeroes)
+
+if len(sys.argv) != 4:
+    sys.exit("Usage: glauber_ising.py grid_dim max_iters max_fails")
+
+dim = int(sys.argv[1])
+shape = (dim, dim)
+max_iters = int(sys.argv[2])
+max_fails = int(sys.argv[3])
+
+random.seed(None)
 
 bvals = []
 avgvals = []
 
-for b in np.arange(0.0, 2, 0.1):
-    beta = b
+fails = 0
+for b in np.arange(0, 1, 0.02):
     avg = 0
     for i in range(10):
-        steps = simulate(max=max_iters)
+        steps, converged = simulate(shape, b, max=max_iters)
         if i == 0:
             avg = steps
         else:
-            avg = (avg + simulate(max=max_iters)) / 2
-    print("beta {:f} avg {:f}".format(b, avg))
+            avg = (avg + steps) / 2
+        fails += (not converged)
+        if fails >= max_fails:
+            break
+    print("beta {:f} avg {:f} fails {:d}/{:d}".format(b, avg, fails, max_fails))
     bvals.append(b)
     avgvals.append(avg)
+    if fails >= max_fails:
+        break
 
 plt.plot(bvals, avgvals)
 plt.xlabel("Temperature beta")
 plt.ylabel("Average Markov Chain steps")
 plt.title("Ising model for temperature beta")
-plt.show()
+plt.savefig("glauber_ising.png")
