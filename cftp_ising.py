@@ -54,13 +54,14 @@ def simulate(shape, beta, max=None):
         if np.array_equal(ones, zeroes) or len(point_rand) == max:
             return len(point_rand), np.array_equal(ones, zeroes)
 
-if len(sys.argv) != 4:
-    sys.exit("Usage: glauber_ising.py grid_dim max_iters max_fails")
+if len(sys.argv) != 5:
+    sys.exit("Usage: glauber_ising.py grid_dim max_iters max_fails output_name")
 
 dim = int(sys.argv[1])
 shape = (dim, dim)
 max_iters = int(sys.argv[2])
 max_fails = int(sys.argv[3])
+output_name = sys.argv[4]
 
 random.seed(None)
 
@@ -88,7 +89,9 @@ for b in np.arange(0, 1, 0.02):
         break
 
 plt.plot(bvals, avgvals)
-plt.xlabel("Temperature beta")
+plt.xlabel("Temperature β")
 plt.ylabel("Average Markov Chain steps")
-plt.title("Ising model with coupling from the past")
-plt.savefig("glauber_ising.png")
+plt.axvline(x = .44, color = 'r', linestyle = '-', label="Critical β")
+plt.title("Ising model with coupling from the past on {:d}x{:d} grid".format(dim, dim))
+plt.legend(loc="upper left")
+plt.savefig(output_name + ".png")
