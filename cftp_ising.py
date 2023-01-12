@@ -41,18 +41,22 @@ def side_by_side(grid1, grid2):
 
 def simulate(shape, beta, max=None):
     point_rand = []
+    point = choose_point(shape=shape)
+    rand = random.uniform(0.0, 1.0)
+    point_rand.append((point, rand))
     while True:
         ones = np.full(shape, 1, dtype=np.int8)
         zeroes = np.full(shape, 0, dtype=np.int8)
-        point = choose_point(shape=shape)
-        rand = random.uniform(0.0, 1.0)
-        point_rand.append((point, rand))
         for t in range(len(point_rand) - 1, -1, -1):
             # print(t, point_rand[t])
             flip(ones, beta, coords=point_rand[t][0], rand=point_rand[t][1])
             flip(zeroes, beta, coords=point_rand[t][0], rand=point_rand[t][1])
-        if np.array_equal(ones, zeroes) or len(point_rand) == max:
+        if len(point_rand) >= max or np.array_equal(ones, zeroes):
             return len(point_rand), np.array_equal(ones, zeroes)
+        for i in range(len(point_rand)):
+            point = choose_point(shape=shape)
+            rand = random.uniform(0.0, 1.0)
+            point_rand.append((point, rand))
 
 if len(sys.argv) != 5:
     sys.exit("Usage: glauber_ising.py grid_dim max_iters max_fails output_name")
@@ -92,6 +96,6 @@ plt.plot(bvals, avgvals)
 plt.xlabel("Temperature β")
 plt.ylabel("Average Markov Chain steps")
 plt.axvline(x = .44, color = 'r', linestyle = '-', label="Critical β")
-plt.title("Ising model with coupling from the past on {:d}x{:d} grid".format(dim, dim))
+plt.title("Ising model with CFTP on {:d}x{:d} grid".format(dim, dim))
 plt.legend(loc="upper left")
 plt.savefig(output_name + ".png")
