@@ -19,36 +19,32 @@ def choose_point(shape):
 def choose_spin(prob_pos):
     return (random.uniform(0.0, 1.0) <= prob_pos)
 
+def sum_neighbors(grid, coords):
+    h,w = grid.shape
+    y,x = coords
+    sums = [0, 0]
+    sums[grid[(y - 1) % h, x]] += 1
+    sums[grid[(y + 1) % h, x]] += 1
+    sums[grid[y, (x - 1) % w]] += 1
+    sums[grid[y, (x + 1) % w]] += 1
+    return sums
+
 def flip(grid, beta, coords, new_spin, rand):
     h,w = grid.shape
     y,x = coords
     old_val = grid[y,x]
-    top = (y - 1) % h
-    bottom = (y + 1) % h
-    left = (x - 1) % w
-    right = (x + 1) % w
+    sums = sum_neighbors(grid, coords)
 
-    # Calculate monochromatic edges at vertex of interest
-    mchrome_before = 0
-    mchrome_before += (grid[y,x] == grid[top, x])
-    mchrome_before += (grid[y,x] == grid[bottom, x])
-    mchrome_before += (grid[y,x] == grid[y, left])
-    mchrome_before += (grid[y,x] == grid[y, right])
-
-    # Set new spin and recalculate monochromatic edges
-    grid[y,x] = new_spin
-    mchrome_after = 0
-    mchrome_after += (grid[y,x] == grid[top, x])
-    mchrome_after += (grid[y,x] == grid[bottom, x])
-    mchrome_after += (grid[y,x] == grid[y, left])
-    mchrome_after += (grid[y,x] == grid[y, right])
+    # Index into neighbor sums based on spin
+    mchrome_before = sums[old_val]
+    mchrome_after = sums[new_spin]
 
     # Calculate acceptance probability
     prob_accept = min(1, exp(2 * (mchrome_after - mchrome_before) * beta))
 
-    # Reset grid if outside of acceptance threshold
-    if rand > prob_accept:
-        grid[y,x] = old_val
+    # Accept new state with calculated probability
+    if rand <= prob_accept:
+        grid[y,x] = new_spin
 
 def side_by_side(grid1, grid2):
     if grid1.shape != grid2.shape:
