@@ -19,37 +19,36 @@ def choose_point(shape):
 def choose_spin(prob_pos):
     return (random.uniform(0.0, 1.0) <= prob_pos)
 
-def flip(grid, mchrome, beta, coords, new_spin, rand):
+def flip(grid, beta, coords, new_spin, rand):
     h,w = grid.shape
     y,x = coords
     old_val = grid[y,x]
+    top = (y - 1) % h
+    bottom = (y + 1) % h
+    left = (x - 1) % w
+    right = (x + 1) % w
 
     # Calculate monochromatic edges at vertex of interest
     mchrome_before = 0
-    mchrome_before += (grid[y,x] == grid[(y - 1) % h, x])
-    mchrome_before += (grid[y,x] == grid[(y + 1) % h, x])
-    mchrome_before += (grid[y,x] == grid[y, (x - 1) % w])
-    mchrome_before += (grid[y,x] == grid[y, (x + 1) % w])
+    mchrome_before += (grid[y,x] == grid[top, x])
+    mchrome_before += (grid[y,x] == grid[bottom, x])
+    mchrome_before += (grid[y,x] == grid[y, left])
+    mchrome_before += (grid[y,x] == grid[y, right])
 
     # Set new spin and recalculate monochromatic edges
     grid[y,x] = new_spin
     mchrome_after = 0
-    mchrome_after += (grid[y,x] == grid[(y - 1) % h, x])
-    mchrome_after += (grid[y,x] == grid[(y + 1) % h, x])
-    mchrome_after += (grid[y,x] == grid[y, (x - 1) % w])
-    mchrome_after += (grid[y,x] == grid[y, (x + 1) % w])
-    # print("mchrome_after {:d} mchrome_before {:d} diff {:d}".format(mchrome_after, mchrome_before, mchrome_after - mchrome_before))
+    mchrome_after += (grid[y,x] == grid[top, x])
+    mchrome_after += (grid[y,x] == grid[bottom, x])
+    mchrome_after += (grid[y,x] == grid[y, left])
+    mchrome_after += (grid[y,x] == grid[y, right])
 
     # Calculate acceptance probability
     prob_accept = min(1, exp(2 * (mchrome_after - mchrome_before) * beta))
 
-    # Set new mchrone count if below acceptance threshold. Else, reset grid
-    if rand <= prob_accept:
-        return mchrome + mchrome_after - mchrome_before
-    else:
+    # Reset grid if outside of acceptance threshold
+    if rand > prob_accept:
         grid[y,x] = old_val
-        return mchrome
-    
 
 def side_by_side(grid1, grid2):
     if grid1.shape != grid2.shape:
@@ -62,14 +61,12 @@ def simulate(shape, beta, max=None):
     steps = 0
     ones = np.full(shape, 1, dtype=np.int8)
     zeros = np.full(shape, 0, dtype=np.int8)
-    mchrome_ones = 2 * dim * dim
-    mchrome_zeros = 2 * dim * dim
     while not np.array_equal(ones, zeros):
         point = choose_point(shape=shape)
         spin = choose_spin(0.5)
         rand = random.uniform(0.0, 1.0)
-        mchrome_ones = flip(ones, mchrome_ones, beta, point, spin, rand)
-        mchrome_zeros = flip(zeros, mchrome_zeros, beta, point, spin, rand)
+        flip(ones, beta, point, spin, rand)
+        flip(zeros, beta, point, spin, rand)
         steps += 1
         if steps == max:
             break
