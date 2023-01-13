@@ -1,5 +1,5 @@
 import sys
-from math import exp
+from math import exp, log
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -53,39 +53,50 @@ def simulate(shape, beta, max=None):
             break
     return steps, np.array_equal(ones, zeroes)
 
-if len(sys.argv) != 4:
-    sys.exit("Usage: glauber_ising.py grid_dim max_iters max_fails")
+if len(sys.argv) != 5:
+    sys.exit("Usage: glauber_ising.py grid_dim max_iters max_fails output_name")
 
 dim = int(sys.argv[1])
 shape = (dim, dim)
 max_iters = int(sys.argv[2])
 max_fails = int(sys.argv[3])
+output_name = sys.argv[4]
 
 random.seed(None)
 
 bvals = []
 avgvals = []
 
+step_size = 0.02
 fails = 0
-for b in np.arange(0, 1, 0.02):
-    avg = 0
+last_log = None
+b_crit = None
+for b in np.arange(0, 1, step_size):
+    avg_steps = 0
     for i in range(10):
         steps, converged = simulate(shape, b, max=max_iters)
         if i == 0:
-            avg = steps
+            avg_steps = steps
         else:
-            avg = (avg + steps) / 2
+            avg_steps = (avg_steps + steps) / 2
         fails += (not converged)
         if fails >= max_fails:
             break
-    print("beta {:f} avg {:f} fails {:d}/{:d}".format(b, avg, fails, max_fails))
+    if b_crit == None and last_log != None and log(avg_steps) - last_log >= 1:
+        b_crit = b - step_size
+    last_log = log(avg_steps)
+
+    print("beta {:f} steps {:f} fails {:d}/{:d} log {:f}".format(b, avg_steps, fails, max_fails, log(avg_steps)))
     bvals.append(b)
-    avgvals.append(avg)
+    avgvals.append(avg_steps)
     if fails >= max_fails:
         break
 
 plt.plot(bvals, avgvals)
-plt.xlabel("Temperature beta")
+plt.xlabel("Temperature β")
 plt.ylabel("Average Markov Chain steps")
-plt.title("Ising model for temperature beta")
-plt.savefig("glauber_ising.png")
+plt.title("Ising model for temperature β on {:d}x{:d} grid".format(dim, dim))
+if b_crit != None:
+    plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Critical β")
+    plt.legend(loc="upper left")
+plt.savefig(output_name + ".png")

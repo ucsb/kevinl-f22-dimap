@@ -1,5 +1,5 @@
 import sys
-from math import exp
+from math import exp, log
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -82,24 +82,28 @@ random.seed(None)
 bvals = []
 avgvals = []
 
+step_size = 0.02
 fails = 0
+last_log = None
 b_crit = None
-for b in np.arange(0, 1, 0.02):
-    avg = 0
+for b in np.arange(0, 1, step_size):
+    avg_steps = 0
     for i in range(10):
         steps, converged = simulate(shape, b, max=max_iters)
         if i == 0:
-            avg = steps
+            avg_steps = steps
         else:
-            avg = (avg + steps) / 2
+            avg_steps = (avg_steps + steps) / 2
         fails += (not converged)
         if fails >= max_fails:
             break
-    print("beta {:f} steps {:f} fails {:d}/{:d}".format(b, avg, fails, max_fails))
-    if b_crit == None and len(avgvals) > 0 and avg / avgvals[-1] >= 4:
-        b_crit = b - 0.02
+    if b_crit == None and last_log != None and log(avg_steps) - last_log >= 1:
+        b_crit = b - step_size
+    last_log = log(avg_steps)
+
+    print("beta {:f} steps {:f} fails {:d}/{:d} log {:f}".format(b, avg_steps, fails, max_fails, log(avg_steps)))
     bvals.append(b)
-    avgvals.append(avg)
+    avgvals.append(avg_steps)
     if fails >= max_fails:
         break
 
