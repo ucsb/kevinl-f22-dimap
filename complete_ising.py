@@ -10,47 +10,44 @@ def choose_point(shape):
     y = (int)(random.uniform(0.0, 1.0) * h)
     return (y, x)
 
-def flip(grid, adj_p, adj_neighbors, beta, coords, rand):
+def flip(grid, grid_p, total_vertices, beta, coords, rand):
     h,w = grid.shape
     y,x = coords
-    beta_p = 2.0 * beta * adj_p[y,x]
-    beta_n = 2.0 * beta * (adj_neighbors - adj_p[y,x])
+    old_spin = grid[y,x]
+    beta_p = 2.0 * beta * (grid_p - (old_spin == 1)) / total_vertices
+    beta_n = 2.0 * beta * (total_vertices - grid_p - (old_spin == 0)) / total_vertices
     prob_p = exp(beta_p) / (exp(beta_n) + exp(beta_p))
     new_spin = (rand <= prob_p)
-    if new_spin != grid[y,x] and new_spin == 0:
-        for i in range(h):
-            for j in range(w):
-                if (i,j) != coords:
-                    adj_p[i,j] -= 1
+    grid_p += (new_spin - old_spin)
     grid[y,x] = new_spin
+    return grid_p
 
 def simulate(shape, beta, max=None):
     dim = shape[0]
     steps = 0
-    adj_neighbors = dim * dim - 1
     ones = np.full(shape, 1, dtype=np.int8)
     zeros = np.full(shape, 0, dtype=np.int8)
-    ones_adj_p = np.full(shape, adj_neighbors, dtype=np.int16)
-    zeros_adj_p = np.full(shape, 0, dtype=np.int16)
+    total_vertices = dim * dim
+    ones_p = dim * dim
+    zeros_p = 0
     while not np.array_equal(ones, zeros):
         point = choose_point(shape=shape)
         rand = random.uniform(0.0, 1.0)
-        flip(ones, ones_adj_p, adj_neighbors, beta, coords=point, rand=rand)
-        flip(zeros, zeros_adj_p, adj_neighbors, beta, coords=point, rand=rand)
+        ones_p = flip(ones, ones_p, total_vertices, beta, coords=point, rand=rand)
+        zeros_p = flip(zeros, zeros_p, total_vertices, beta, coords=point, rand=rand)
         steps += 1
         if steps == max:
             break
     return steps, np.array_equal(ones, zeros)
 
-if len(sys.argv) != 6:
-    sys.exit("Usage: complete_ising.py grid_dim step_size max_iters max_fails output_name")
+if len(sys.argv) != 5:
+    sys.exit("Usage: complete_ising.py grid_dim step_size max_iters max_fails")
 
 dim = int(sys.argv[1])
 shape = (dim, dim)
 step_size = float(sys.argv[2])
 max_iters = int(sys.argv[3])
 max_fails = int(sys.argv[4])
-output_name = sys.argv[5]
 
 random.seed(None)
 
@@ -60,7 +57,7 @@ avgvals = []
 fails = 0
 last_log = None
 b_crit = None
-for b in np.arange(0, 1, step_size):
+for b in np.arange(0, 10, step_size):
     avg_steps = 0
     for i in range(10):
         steps, converged = simulate(shape, b, max=max_iters)
@@ -88,4 +85,4 @@ plt.title("Glauber Heat Bath on {:d}x{:d} Complete Graph".format(dim, dim))
 if b_crit != None:
     plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Critical β")
     plt.legend(loc="upper left")
-plt.savefig(output_name + ".png")
+plt.savefig("complete{:d}x{:d}.png".format(dim, dim))
