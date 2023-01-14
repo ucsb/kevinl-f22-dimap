@@ -32,11 +32,10 @@ def sum_neighbors(grid, coords):
 def flip(grid, beta, coords, new_spin, rand):
     h,w = grid.shape
     y,x = coords
-    old_val = grid[y,x]
     sums = sum_neighbors(grid, coords)
 
     # Index into neighbor sums based on spin
-    mchrome_before = sums[old_val]
+    mchrome_before = sums[grid[y,x]]
     mchrome_after = sums[new_spin]
 
     # Calculate acceptance probability
