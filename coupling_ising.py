@@ -1,9 +1,7 @@
-import sys
-from math import exp
-import matplotlib.pyplot as plt
-import numpy as np
-import random
 import utils
+from math import exp
+import random
+import numpy as np
 
 def heat_bath_flip(grid, beta, coords, rand, new_spin):
     sums = utils.sum_neighbors(grid, coords)
@@ -32,10 +30,10 @@ class Forward_Coupling:
         self.max_iters = max_iters
     def run(self, beta):
         steps = 0
-        ones = np.full(shape, 1, dtype=np.int8)
-        zeros = np.full(shape, 0, dtype=np.int8)
-        while steps < max_iters and not np.array_equal(ones, zeros):
-            point = utils.choose_point(shape=shape)
+        ones = np.full(self.shape, 1, dtype=np.int8)
+        zeros = np.full(self.shape, 0, dtype=np.int8)
+        while steps < self.max_iters and not np.array_equal(ones, zeros):
+            point = utils.choose_point(self.shape)
             rand = random.uniform(0.0, 1.0)
             spin = utils.choose_spin(0.5)
             self.flip(ones, beta, point, rand, spin)
@@ -43,27 +41,27 @@ class Forward_Coupling:
             steps += 1
         return steps, np.array_equal(ones, zeros)
 
-if len(sys.argv) != 4:
-    sys.exit("Usage: coupling_ising.py grid_dim step_size max_iters")
-
-dim = int(sys.argv[1])
-shape = (dim, dim)
-step_size = float(sys.argv[2])
-max_iters = int(sys.argv[3])
-
-random.seed(None)
-
-bvals = []
-bsteps = []
-
-b_crit = 0.44
-bvals, bsteps = utils.simulate(Forward_Coupling(heat_bath_flip, shape, max_iters), step_size)
-plt.plot(bvals, bsteps, label="Heat Bath")
-bvals, bsteps = utils.simulate(Forward_Coupling(metropolis_flip, shape, max_iters), step_size)
-plt.plot(bvals, bsteps, label="Metropolis Filter")
-plt.xlabel("Temperature β")
-plt.ylabel("Steps to converge (by forward coupling)")
-plt.title("Ising model on {:d}x{:d} grid".format(dim, dim))
-plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Critical β")
-plt.legend(loc="upper left")
-plt.savefig("coupling{:d}x{:d}.png".format(dim, dim))
+class CFTP:
+    def __init__(self, flip, shape, max_iters):
+        self.flip = flip
+        self.shape = shape
+        self.max_iters = max_iters
+    def run(self, beta):
+        point_rand_spin = []
+        point = utils.choose_point(self.shape)
+        rand = random.uniform(0.0, 1.0)
+        spin = utils.choose_spin(0.5)
+        point_rand_spin.append((point, rand, spin))
+        while True:
+            ones = np.full(self.shape, 1, dtype=np.int8)
+            zeroes = np.full(self.shape, 0, dtype=np.int8)
+            for t in range(len(point_rand_spin) - 1, -1, -1):
+                self.flip(ones, beta, point_rand_spin[t][0], point_rand_spin[t][1], point_rand_spin[t][2])
+                self.flip(zeroes, beta, point_rand_spin[t][0], point_rand_spin[t][1], point_rand_spin[t][2])
+            if len(point_rand_spin) >= self.max_iters or np.array_equal(ones, zeroes):
+                return len(point_rand_spin), np.array_equal(ones, zeroes)
+            for i in range(len(point_rand_spin)):
+                point = utils.choose_point(self.shape)
+                rand = random.uniform(0.0, 1.0)
+                spin = utils.choose_spin(0.5)
+                point_rand_spin.append((point, rand, spin))

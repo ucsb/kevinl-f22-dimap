@@ -2,6 +2,7 @@ import random
 import matplotlib.pyplot as plt
 import numpy as np
 from statistics import median
+from math import exp
 
 def simulate(mixer, step_size):
     bvals = []
