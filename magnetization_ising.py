@@ -1,5 +1,5 @@
 import sys
-from math import exp, log
+from math import exp
 import matplotlib.pyplot as plt
 import numpy as np
 import random
@@ -56,33 +56,33 @@ class Magnetization:
         ones = np.full(self.shape, 1, dtype=np.int8)
         ones_m = sum_magnetization(ones)
         while steps < self.max_iters and (abs(ones_m / self.total_vertices - 0.5) > .05):
-            point = utils.choose_point(shape=shape)
+            point = utils.choose_point(self.shape)
             rand = random.uniform(0.0, 1.0)
             ones_m = self.flip(ones, ones_m, beta, coords=point, rand=rand)
             steps += 1
         return steps, (abs(ones_m / self.total_vertices - 0.5) <= .05)
 
-if len(sys.argv) != 4:
-    sys.exit("Usage: magnetization_ising.py grid_dim step_size max_iters")
+# if len(sys.argv) != 4:
+#     sys.exit("Usage: magnetization_ising.py grid_dim step_size max_iters")
 
-dim = int(sys.argv[1])
-shape = (dim, dim)
-step_size = float(sys.argv[2])
-max_iters = int(sys.argv[3])
+# dim = int(sys.argv[1])
+# shape = (dim, dim)
+# step_size = float(sys.argv[2])
+# max_iters = int(sys.argv[3])
 
-random.seed(None)
+# random.seed(None)
 
-bvals = []
-bsteps = []
+# bvals = []
+# bsteps = []
 
-b_crit = 0.44
-bvals, bsteps = utils.simulate(Magnetization(heat_bath_flip, shape, max_iters), step_size)
-plt.plot(bvals, bsteps, label="Heat Bath")
-bvals, bsteps = utils.simulate(Magnetization(metropolis_flip, shape, max_iters), step_size)
-plt.plot(bvals, bsteps, label="Metropolis Filter")
-plt.xlabel("Temperature β")
-plt.ylabel("Steps to converge (by magnetization)")
-plt.title("Ising model on {:d}x{:d} grid".format(dim, dim))
-plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Critical β")
-plt.legend(loc="upper left")
-plt.savefig("magnetization{:d}x{:d}.png".format(dim, dim))
+# b_crit = 0.44
+# bvals, bsteps = utils.simulate(Magnetization(heat_bath_flip, shape, max_iters), step_size)
+# plt.plot(bvals, bsteps, label="Heat Bath")
+# bvals, bsteps = utils.simulate(Magnetization(metropolis_flip, shape, max_iters), step_size)
+# plt.plot(bvals, bsteps, label="Metropolis Filter")
+# plt.xlabel("Temperature β")
+# plt.ylabel("Steps to converge (by magnetization)")
+# plt.title("Ising model on {:d}x{:d} grid".format(dim, dim))
+# plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Critical β")
+# plt.legend(loc="upper left")
+# plt.savefig("magnetization{:d}x{:d}.png".format(dim, dim))
