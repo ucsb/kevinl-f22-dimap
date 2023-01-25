@@ -2,7 +2,6 @@ from math import exp
 import numpy as np
 import random
 import utils
-from complete_ising import Mean_Field
 
 def sum_magnetization(grid):
     h,w = grid.shape
