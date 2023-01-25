@@ -55,3 +55,6 @@ def sum_neighbors(grid, coords):
     sums[grid[y, (x - 1) % w]] += 1
     sums[grid[y, (x + 1) % w]] += 1
     return sums
+
+def coupling_params(shape):
+    return (choose_point(shape), random.uniform(0.0, 1.0), choose_spin(0.5))
