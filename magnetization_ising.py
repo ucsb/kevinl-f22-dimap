@@ -2,6 +2,7 @@ from math import exp
 import numpy as np
 import random
 import utils
+from complete_ising import Mean_Field
 
 def sum_magnetization(grid):
     h,w = grid.shape
@@ -53,12 +54,12 @@ class Magnetization:
         steps = 0
         ones = np.full(self.shape, 1, dtype=np.int8)
         ones_m = sum_magnetization(ones)
-        while steps < self.max_iters and (abs(ones_m) > .1):
+        while steps < self.max_iters and (abs(ones_m) >= 1):
             point = utils.choose_point(self.shape)
             rand = random.uniform(0.0, 1.0)
             ones_m = self.flip(ones, ones_m, beta, coords=point, rand=rand)
             steps += 1
-        return steps, (abs(ones_m) <= .1)
+        return steps, (abs(ones_m) < 1)
 
 if __name__ == "__main__":
     import sys
