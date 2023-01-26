@@ -4,6 +4,33 @@ import numpy as np
 from statistics import median
 from math import exp
 
+class Grid:
+    def __init__(self, shape, value, p_vertices=None):
+        self.grid = np.full(shape, value, dtype=np.int8)
+        self.shape = shape
+        self.total_vertices = shape[0] * shape[1]
+        if p_vertices == None:
+            self.p_vertices = np.sum(self.grid)
+        else:
+            self.p_vertices = p_vertices
+    def __eq__(self, other):
+        if isinstance(other, Grid):
+            return np.array_equal(self.grid,other.grid)
+        return False
+    def __neq__(self, other):
+        return not (self == other)
+    def __getitem__(self, coords):
+        y,x = coords
+        return self.grid[y,x]
+    def __setitem__(self, coords, new_spin):
+        y,x = coords
+        self.p_vertices += (new_spin - self.grid[y,x])
+        self.grid[y,x] = new_spin
+    def p(self):
+        return self.p_vertices
+    def n(self):
+        return self.total_vertices - self.p_vertices
+
 def simulate(mixer, step_size):
     bvals = []
     bsteps = []
