@@ -72,11 +72,11 @@ class Magnetization:
         self.flip = flip
         self.shape = shape
         self.max_iters = max_iters
-        self.total_vertices = shape[0] * shape[1]
+        self.neighbors = self.shape[0] * self.shape[1] - 1
     def run(self, beta):
         steps = 0
         ones = utils.Grid(self.shape, 1)
-        beta = 2 * beta / (self.total_vertices - 1)
+        beta = 2 * beta / self.neighbors
         while steps < self.max_iters and ones.n() != ones.p():
             params = utils.coupling_params(self.shape)
             self.flip(ones, beta, params)
@@ -113,8 +113,8 @@ if __name__ == "__main__":
     user_in = input("The simulation is done. Enter a title for the plot:\n")
     plt.plot(bvals, bsteps)
     plt.xlabel("Temperature β")
-    plt.ylabel("Steps to converge (in MC steps)")
-    plt.title(user_in + " ({:d}x{:d} grid)".format(dim, dim))
+    plt.ylabel("Mixing time (in MC steps)")
+    plt.title(user_in + " ({:d}x{:d} mean field)".format(dim, dim))
     plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Critical β")
     plt.legend(loc="upper left")
     plt.savefig("complete_ising{:d}x{:d}.png".format(dim, dim))
