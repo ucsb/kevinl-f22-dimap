@@ -26,6 +26,8 @@ class Grid:
         y,x = coords
         self.p_vertices += (new_spin - self.grid[y,x])
         self.grid[y,x] = new_spin
+    def __str__(self):
+        return self.grid.__str__() + "\npositive {:d} negative {:d}".format(self.p(), self.n())
     def p(self):
         return self.p_vertices
     def n(self):
