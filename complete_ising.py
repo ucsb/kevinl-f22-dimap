@@ -66,3 +66,39 @@ class CFTP:
                 return len(params_t), np.array_equal(ones, zeros)
             for i in range(len(params_t)):
                 params_t.append(utils.coupling_params(self.shape))
+
+if __name__ == "__main__":
+    import sys
+    import matplotlib.pyplot as plt
+
+    if len(sys.argv) != 4:
+        sys.exit("Usage: complete_ising.py grid_dim step_size max_iters")
+
+    dim = int(sys.argv[1])
+    shape = (dim, dim)
+    step_size = float(sys.argv[2])
+    max_iters = int(sys.argv[3])
+
+    selection = [Forward_Coupling, CFTP]
+    user_in = input("Choose a mixing time metric: (1) forward coupling (2) CFTP\n")
+    mixer = selection[int(user_in) - 1]
+
+    selection = [heat_bath_flip, metropolis_flip]
+    user_in = input("Choose an algorithm: (1) heat bath (2) Metropolis filter\n")
+    alg = selection[int(user_in) - 1]
+
+    random.seed(None)
+
+    b_crit = 1.0
+    bvals = []
+    bsteps = []
+    bvals, bsteps = utils.simulate(mixer(alg, shape, max_iters), step_size)
+
+    user_in = input("The simulation is done. Enter a title for the plot:\n")
+    plt.plot(bvals, bsteps)
+    plt.xlabel("Temperature β")
+    plt.ylabel("Steps to converge (in MC steps)")
+    plt.title(user_in + " ({:d}x{:d} grid)".format(dim, dim))
+    plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Critical β")
+    plt.legend(loc="upper left")
+    plt.savefig("complete_ising{:d}x{:d}.png".format(dim, dim))
