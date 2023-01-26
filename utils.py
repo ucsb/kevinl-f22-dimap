@@ -34,6 +34,7 @@ class Grid:
         return self.total_vertices - self.p_vertices
 
 def simulate(mixer, step_size):
+    max_iters = mixer.max_iters
     bvals = []
     bsteps = []
     b = 0
@@ -41,17 +42,15 @@ def simulate(mixer, step_size):
         trials = []
         for i in range(10):
             steps, converged = mixer.run(b)
-            if converged:
-                trials.append(steps)
-            else:
-                print("beta {:f} failed to converge".format(b))
-                return bvals, bsteps
-        if len(trials) > 0:
-            med_steps = median(trials)
-            bvals.append(b)
-            bsteps.append(med_steps)
-            print("beta {:f} steps {:f}".format(b, med_steps))
-            b += step_size
+            trials.append(steps)
+        med_steps = median(trials)
+        if med_steps >= max_iters:
+            print("beta {:f} failed to converge".format(b))
+            return bvals, bsteps
+        bvals.append(b)
+        bsteps.append(med_steps)
+        print("beta {:f} steps {:f}".format(b, med_steps))
+        b += step_size
     return bvals, bsteps
 
 def choose_point(shape):
