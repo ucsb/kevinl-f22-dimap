@@ -67,6 +67,22 @@ class CFTP:
             for i in range(len(params_t)):
                 params_t.append(utils.coupling_params(self.shape))
 
+class Magnetization:
+    def __init__(self, flip, shape, max_iters):
+        self.flip = flip
+        self.shape = shape
+        self.max_iters = max_iters
+        self.total_vertices = shape[0] * shape[1]
+    def run(self, beta):
+        steps = 0
+        ones = utils.Grid(self.shape, 1)
+        beta = 2 * beta / (self.total_vertices - 1)
+        while steps < self.max_iters and ones.n() != ones.p():
+            params = utils.coupling_params(self.shape)
+            self.flip(ones, beta, params)
+            steps += 1
+        return steps, ones.n() == ones.p()
+
 if __name__ == "__main__":
     import sys
     import matplotlib.pyplot as plt
@@ -79,8 +95,8 @@ if __name__ == "__main__":
     step_size = float(sys.argv[2])
     max_iters = int(sys.argv[3])
 
-    selection = [Forward_Coupling, CFTP]
-    user_in = input("Choose a mixing time metric: (1) forward coupling (2) CFTP\n")
+    selection = [Forward_Coupling, CFTP, Magnetization]
+    user_in = input("Choose a mixing time metric: (1) forward coupling (2) CFTP (3) magnetization\n")
     mixer = selection[int(user_in) - 1]
 
     selection = [heat_bath_flip, metropolis_flip]
