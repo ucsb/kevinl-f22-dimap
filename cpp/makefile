@@ -1,5 +1,5 @@
 CFLAGS = -Wall -pedantic -std=c++20
-EXECS: ising report
+EXECS = ising report
 
 all: $(EXECS)
 
