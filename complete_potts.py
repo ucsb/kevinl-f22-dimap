@@ -61,7 +61,7 @@ class Magnetization:
         ones = utils.Potts_Grid(self.shape, 1, self.colors)
         beta = 2 * beta / self.neighbors
         while steps < self.max_iters and ones.ones != self.target:
-            params = (utils.choose_point(shape), random.uniform(0.0, 1.0), choose_spin(self.colors))
+            params = (utils.choose_point(self.shape), random.uniform(0.0, 1.0), choose_spin(self.colors))
             self.flip(ones, beta, params)
             steps += 1
         return steps, False
@@ -84,7 +84,7 @@ class Magnetization:
                     return False
             return True
         while steps < self.max_iters and not converged():
-            params = (utils.choose_point(shape), random.uniform(0.0, 1.0), choose_spin(self.colors))
+            params = (utils.choose_point(self.shape), random.uniform(0.0, 1.0), choose_spin(self.colors))
             self.flip(ones, beta, params)
             steps += 1
         return steps, False

@@ -61,7 +61,7 @@ class Forward_Coupling:
             grids.append(utils.Potts_Grid(self.shape, c, self.colors))
         beta *= 2
         while steps < self.max_iters and not grids_eq(grids):
-            params = (utils.choose_point(shape), random.uniform(0.0, 1.0), choose_spin(self.colors))
+            params = (utils.choose_point(self.shape), random.uniform(0.0, 1.0), choose_spin(self.colors))
             for g in grids:
                 self.flip(g, beta, params)
             steps += 1
@@ -84,7 +84,7 @@ class Magnetization:
                     return False
             return True
         while steps < self.max_iters and not converged():
-            params = (utils.choose_point(shape), random.uniform(0.0, 1.0), choose_spin(self.colors))
+            params = (utils.choose_point(self.shape), random.uniform(0.0, 1.0), choose_spin(self.colors))
             self.flip(ones, beta, params)
             steps += 1
         return steps, False
