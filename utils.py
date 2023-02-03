@@ -4,6 +4,32 @@ import numpy as np
 from statistics import median
 from math import exp
 
+class Potts_Grid:
+    def __init__(self, shape, fill_value, colors):
+        self.grid = np.full(shape, fill_value, dtype=np.int8)
+        self.shape = shape
+        self.colors = colors
+        self.vertices = shape[0] * shape[1]
+        self.counts = [0] * colors
+        self.counts[fill_value] = np.count_nonzero(self.grid == fill_value)
+        self.target = int(1.0 / colors * self.vertices)
+    def __eq__(self, other):
+        if isinstance(other, Potts_Grid):
+            return np.array_equal(self.grid,other.grid)
+        return False
+    def __neq__(self, other):
+        return not (self == other)
+    def __getitem__(self, point):
+        return self.grid[point]
+    def __setitem__(self, point, new_color):
+        old_color = self.grid[point]
+        if old_color != new_color:
+            self.counts[old_color] -= 1
+            self.counts[new_color] += 1
+            self.grid[point] = new_color
+    def __str__(self):
+        return self.grid.__str__() + "\ncolors: " + self.counts.__str__()
+
 class Grid:
     def __init__(self, shape, value, p_vertices=None):
         self.grid = np.full(shape, value, dtype=np.int8)
