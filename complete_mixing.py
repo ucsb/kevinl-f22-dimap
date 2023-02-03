@@ -18,10 +18,14 @@ bvals = []
 bsteps = []
 
 b_crit = 1.0
-bvals, bsteps = simulate(mf.CFTP(mf.heat_bath_flip, shape, max_iters), step_size)
-plt.plot(bvals, bsteps, color='b', label="Heat Bath (CFTP)")
-bvals, bsteps = simulate(mf.CFTP(mf.metropolis_flip, shape, max_iters), step_size)
-plt.plot(bvals, bsteps, color='c', label="Metropolis Filter (CFTP)")
+# bvals, bsteps = simulate(mf.CFTP(mf.heat_bath_flip, shape, max_iters), step_size)
+# plt.plot(bvals, bsteps, color='b', label="Heat Bath (CFTP)")
+bvals, bsteps = simulate(mf.Forward_Coupling(mf.heat_bath_flip, shape, max_iters), step_size)
+plt.plot(bvals, bsteps, color='b', label="Heat Bath (forward coupling)")
+# bvals, bsteps = simulate(mf.CFTP(mf.metropolis_flip, shape, max_iters), step_size)
+# plt.plot(bvals, bsteps, color='c', label="Metropolis Filter (CFTP)")
+bvals, bsteps = simulate(mf.Forward_Coupling(mf.metropolis_flip, shape, max_iters), step_size)
+plt.plot(bvals, bsteps, color='c', label="Metropolis Filter (forward coupling)")
 bvals, bsteps = simulate(mf.Magnetization(mf.heat_bath_flip, shape, max_iters), step_size)
 plt.plot(bvals, bsteps, color='g', label="Heat Bath (Magnetization)")
 bvals, bsteps = simulate(mf.Magnetization(mf.metropolis_flip, shape, max_iters), step_size)
