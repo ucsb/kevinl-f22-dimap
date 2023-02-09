@@ -51,22 +51,6 @@ class Forward_Coupling:
         return steps, False
 
 class Magnetization:
-    def __init__(self, flip, shape, max_iters):
-        self.flip = flip
-        self.shape = shape
-        self.max_iters = max_iters
-        self.target = int(1.0 / colors * shape[0] * shape[1])
-    def run(self, beta):
-        steps = 0
-        ones = utils.Potts_Grid(self.shape, 1, self.colors)
-        beta = 2 * beta / self.neighbors
-        while steps < self.max_iters and ones.ones != self.target:
-            params = (utils.choose_point(self.shape), random.uniform(0.0, 1.0), choose_spin(self.colors))
-            self.flip(ones, beta, params)
-            steps += 1
-        return steps, False
-
-class Magnetization:
     def __init__(self, flip, colors, shape, max_steps):
         self.flip = flip
         self.colors = colors
@@ -93,8 +77,8 @@ if __name__ == "__main__":
     import sys
     import matplotlib.pyplot as plt
 
-    if len(sys.argv) != 5:
-        sys.exit("Usage: complete_potts.py colors grid_dim step_size max_iters")
+    if len(sys.argv) != 6:
+        sys.exit("Usage: complete_potts.py colors grid_dim step_size max_iters b_dyn")
 
     colors = int(sys.argv[1])
     if colors > 255 or colors < 2:
@@ -103,6 +87,7 @@ if __name__ == "__main__":
     shape = (dim, dim)
     step_size = float(sys.argv[3])
     max_iters = int(sys.argv[4])
+    b_dyn = float(sys.argv[5])
 
     selection = [Forward_Coupling, Magnetization]
     user_in = input("Choose a mixing time metric: (1) forward coupling (2) magnetization\n")
@@ -133,7 +118,15 @@ if __name__ == "__main__":
     plt.xlabel("Temperature β")
     plt.ylabel("Mixing time (in MC steps)")
     plt.title(user_in + " ({:d}x{:d} mean field)".format(dim, dim))
-    plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Critical β")
+    plt.axvline(x = b_dyn, color = 'r', linestyle = '-', label="First critical β")
+    plt.annotate(
+        "β={:.2f}".format(b_dyn),
+        xy=(b_dyn, max_iters),
+        textcoords="offset points",
+        xytext=(0, -15),
+        ha='right',
+        color="red")
+    plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Second critical β")
     plt.annotate(
         "β={:.2f}".format(b_crit),
         xy=(b_crit, max_iters),
