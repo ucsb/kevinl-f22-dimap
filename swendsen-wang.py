@@ -8,7 +8,7 @@ from statistics import median
 import sys
 
 if len(sys.argv) != 3:
-    exit("Invalid args")
+    exit("Usage: swendsen-wang.py dim colors")
 
 dim = int(sys.argv[1])
 shape = (dim, dim)
@@ -57,12 +57,6 @@ def flip(grid):
                         q.put(right)
 
 target = int(1.0/colors * shape[0] * shape[1])
-
-
-
-# for i in range(5):
-#     flip(g)
-#     print(g)
 
 def coupling(max_steps):
     grids = []
@@ -119,10 +113,7 @@ while True:
     print("beta {:f} steps {:f}".format(beta, med_steps))
     beta += step_size
 
-plt.plot(bvals, bsteps)
-plt.xlabel("Temperature β")
-plt.ylabel("Steps to converge (in MC steps)")
-plt.title("Swendsen-Wang ({:d} colors, {:d}x{:d} grid)".format(colors, dim, dim))
-plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Critical β")
-plt.legend(loc="upper left")
-plt.savefig("swendsen-wang(q{:d}){:d}x{:d}.png".format(colors, dim, dim))
+with open("swendsen-wang_q{:d}_{:d}x{:d}.csv".format(colors, dim, dim), 'w', encoding='utf-8') as f:
+    for i in range(len(bvals)):
+        f.write(f"{bvals[i]}, {bsteps[i]}\n")
+    f.write(f"{b_crit}, 0\n{b_crit}, {bsteps[-1]}")
