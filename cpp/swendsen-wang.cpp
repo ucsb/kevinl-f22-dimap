@@ -4,6 +4,8 @@
 #include <random>
 #include <chrono>
 #include <cmath>
+#include <algorithm>
+#include <fstream>
 
 using namespace std;
 
@@ -116,7 +118,7 @@ void sum_neighbors(const Grid& g, int& r, int& c, int counts[]) {
 }
 
 void glauber_ising_flip(Grid& g, int& r, int& c, double& beta, double& rand) {
-    int counts[2];
+    int counts[2] {0};
     sum_neighbors(g, r, c, counts);
     double beta_n = beta * counts[0];
     double beta_p = beta * counts[1];
@@ -143,6 +145,30 @@ int glauber_ising_coupling(int dim, double beta, int max_steps) {
 }
 
 int main(int argc, char** argv) {
-    printf("%d steps\n", glauber_ising_coupling(100, 0, 1000000));
+    int dim = 100;
+    int max_steps = 10000000;
+    int median;
+    double step_size = .02;
+    double beta = 0;
+    vector<int> trials(10, 0);
+    ofstream file;
+    file.open("swendsen-wang.csv");
+
+    while (median < max_steps) {
+        for (int i = 0; i < trials.size(); i++) {
+            trials[i] = glauber_ising_coupling(dim, 2 * beta, max_steps);
+        }
+        sort(trials.begin(), trials.end());
+        median = trials[trials.size() / 2];
+        if (median < max_steps) {
+            printf("beta %f mixed in %d steps\n", beta, median);
+            file << beta << ", " << median << "\n";
+        } else {
+            printf("beta %f failed to converge\n", beta);
+        }
+        beta += step_size;
+    };
+
+    file.close();
     return 0;
 }
