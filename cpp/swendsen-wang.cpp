@@ -11,14 +11,14 @@ public:
         this->h = h;
         this->size = w * h;
         this->graph = new int*[h];
-        for (int i = 0; i < w; i++)
+        for (int i = 0; i < h; i++)
             this->graph[i] = new int[w] {0};
         this->colors = colors;
         this->counts = new int[colors] {0};
         this->counts[0] = this->size;
     }
     ~Grid() {
-        for (int i = 0; i < this->w; i++)
+        for (int i = 0; i < this->h; i++)
             delete[] graph[i];
         delete[] graph;
         delete[] counts;
