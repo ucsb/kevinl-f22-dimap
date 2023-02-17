@@ -20,35 +20,28 @@ public:
         this->w = w;
         this->h = h;
         this->size = w * h;
-        this->graph = new int*[h];
-        for (int i = 0; i < h; i++)
-            this->graph[i] = new int[w] {0};
+        this->graph = new int[size];
         this->colors = colors;
         this->counts = new int[colors] {0};
         this->counts[0] = this->size;
     }
     ~Grid() {
-        for (int i = 0; i < this->h; i++)
-            delete[] graph[i];
         delete[] graph;
         delete[] counts;
     }
-    void set(int r, int c, int new_val) {
-        int old_val = this->graph[r][c];
+    void set(int index, int new_val) {
+        int old_val = this->graph[index];
         if (old_val != new_val) {
             this->counts[old_val]--;
             this->counts[new_val]++;
         }
-        this->graph[r][c] = new_val;
+        this->graph[index] = new_val;
     }
     void set_all(int color) {
-        for (int i = 0; i < this->h; i++) {
-            for (int j = 0; j < this->w; j++) {
-                this->graph[i][j] = color;
-            }
-        }
+        for (int i = 0; i < this->size; i++)
+            this->graph[i] = color;
         for (int i = 0; i < this->colors; i++)
-            counts[i] = 0;
+            this->counts[i] = 0;
         this->counts[color] = this->size;
     }
     void chessboard() {
@@ -56,23 +49,17 @@ public:
         for (int i = 0; i < this->colors; i++)
             counts[i] = 0;
         for (int i = 0; i < this->h; i++) {
-            start_color = i % this->colors;
             for (int j = 0; j < this->w; j++) {
-                this->graph[i][j] = (start_color + j) % this->colors;
-                this->counts[(start_color + j) % this->colors]++;
+                this->graph[(i * this->w) + j] = (i + j) % this->colors;
+                this->counts[(i + j) % this->colors]++;
             }
         }
     }
     void print() {
-        for (int i = 0; i < this->h; i++) {
-            for (int j = 0; j < this->w; j++) {
-                if (this->graph[i][j] != -1) {
-                    cout << this->graph[i][j] << " ";
-                } else {
-                    cout << "_ ";
-                }
-            }
-            cout << "\n";
+        for (int i = 0; i < this->size; i++) {
+            cout << this->graph[i] << " ";
+            if (i % this->w == this->w - 1)
+                cout << "\n";
         }
         cout << "Counts: ";
         for (int i = 0; i < this->colors; i++) {
@@ -83,51 +70,116 @@ public:
     bool operator==(const Grid& other) {
         if (this->w != other.w || this->h != other.w) return false;
         if (this->colors != other.colors) return false;
-        for (int i = 0; i < this->h; i++) {
-            for (int j = 0; j < this->w; j++) {
-                if (this->graph[i][j] != other.graph[i][j]) {
-                    return false;
-                }
-            }
+        for (int i = 0; i < this->size; i++) {
+            if (this->graph[i] != other.graph[i])
+                return false;
         }
         return true;
     }
     bool operator!=(const Grid& other) {
         return !(*this == other);
     }
+    bool mag_match(const Grid& other) {
+        if (this->colors != other.colors) return false;
+        for (int i = 0; i < this->colors; i++) {
+            if (abs(this->counts[i] - other.counts[i]) > this->colors)
+                return false;
+        }
+        return true;
+    }
 
     int w, h, size, colors;
-    int** graph;
+    int* graph;
     int* counts;
 };
 
-void choose_point(int dim, int& r, int& c) {
-    r = int(uniform(generator) * dim);
-    c = int(uniform(generator) * dim);
+int choose_point(const Grid& c) {
+    return int(uniform(generator) * c.size);
 }
 
-void sum_neighbors(const Grid& g, int& r, int& c, int counts[]) {
-    if (r-1 >= 0)
-        counts[g.graph[r-1][c]]++;
-    if (r+1 < g.h)
-        counts[g.graph[r+1][c]]++;
-    if (c-1 >= 0)
-        counts[g.graph[r][c-1]]++;
-    if (c+1 < g.w)
-        counts[g.graph[r][c+1]]++;
+// Avoids negative remainders
+int mod(int a, int b) {
+    return (b + (a % b)) % b;
 }
 
-void glauber_ising_flip(Grid& g, int& r, int& c, double& beta, double& rand) {
+void sum_neighbors(const Grid& g, int& index, int counts[]) {
+    counts[g.graph[mod(index+g.w, g.size)]]++;
+    counts[g.graph[mod(index-g.w, g.size)]]++;
+    counts[g.graph[mod(index-1, g.size)]]++;
+    counts[g.graph[mod(index+1, g.size)]]++;
+}
+
+void glauber_ising_flip(Grid& g, int& index, double& beta, double& rand) {
     int counts[2] {0};
-    sum_neighbors(g, r, c, counts);
+    sum_neighbors(g, index, counts);
     double beta_n = beta * counts[0];
     double beta_p = beta * counts[1];
     double prob_p = exp(beta_p) / (exp(beta_n) + exp(beta_p));
-    g.set(r, c, (int)(rand <= prob_p));
+    g.set(index, (int)(rand <= prob_p));
+}
+
+int choose_color(int colors) {
+    return (int)(uniform(generator) * colors);
+}
+
+bool keep_edge(double& beta) {
+    return uniform(generator) > exp(-1 * beta);
+}
+
+void swendsen_wang_flip(Grid& g, double& beta) {
+    // bool** visited[g.h];
+    // for (int i = 0; i < g.h; i++)
+    //     visited[i] = (bool[g.w] {false});
+    bool* visited = new bool[g.size] {false};
+
+    int q_head = 0, q_tail = 0, index, old_color, new_color;
+    int top, bottom, left, right;
+    // pair<int,int> queue[g.size];
+    int* queue = new int[g.size];
+    for (int i = 0; i < g.size; i++) {
+        if (visited[i] == false) {
+            visited[i] = true;
+            queue[q_tail] = i;
+            q_tail++;
+            old_color = g.graph[i];
+            new_color = choose_color(g.colors);
+            while (q_head != q_tail) {
+                index = queue[q_head];
+                q_head++;
+                g.set(index, new_color);
+                top = mod(index-g.w, g.size);
+                bottom = mod(index+g.w, g.size);
+                left = mod(index-1, g.size);
+                right = mod(index+1, g.size);
+                if (visited[top] == false && g.graph[top] == old_color && keep_edge(beta)) {
+                    visited[top] = true;
+                    queue[q_tail] = top;
+                    q_tail++;
+                }
+                if (visited[bottom] == false && g.graph[bottom] == old_color && keep_edge(beta)) {
+                    visited[bottom] = true;
+                    queue[q_tail] = bottom;
+                    q_tail++;
+                }
+                if (visited[left] == false && g.graph[left] == old_color && keep_edge(beta)) {
+                    visited[left] = true;
+                    queue[q_tail] = left;
+                    q_tail++;
+                }
+                if (visited[right] == false && g.graph[right] == old_color && keep_edge(beta)) {
+                    visited[right] = true;
+                    queue[q_tail] = right;
+                    q_tail++;
+                }
+            }
+        }
+    }
+    delete[] visited;
+    delete[] queue;
 }
 
 int glauber_ising_coupling(int dim, double beta, int max_steps) {
-    int r, c, steps = 0;
+    int index, steps = 0;
     int* counts;
     double rand;
     Grid zeros(dim, 2);
@@ -135,34 +187,65 @@ int glauber_ising_coupling(int dim, double beta, int max_steps) {
     zeros.set_all(0);
     ones.set_all(1);
     while (steps < max_steps && ones != zeros) {
-        choose_point(dim, r, c);
+        index = choose_point(zeros);
         rand = uniform(generator);
-        glauber_ising_flip(zeros, r, c, beta, rand);
-        glauber_ising_flip(ones, r, c, beta, rand);
+        glauber_ising_flip(zeros, index, beta, rand);
+        glauber_ising_flip(ones, index, beta, rand);
         steps++;
     }
     return steps;
 }
 
+int swendsen_ising_magnetization(int dim, double beta, int max_steps) {
+    int r, c, steps = 0;
+    int* counts;
+    double rand;
+    Grid zeros(dim, 2);
+    Grid ones(dim, 2);
+    Grid chess(dim, 2);
+    zeros.set_all(0);
+    ones.set_all(1);
+    chess.chessboard();
+    while (steps < max_steps && !((zeros.mag_match(ones)) && (ones.mag_match(chess) && (zeros.mag_match(chess))))) {
+        swendsen_wang_flip(zeros, beta);
+        swendsen_wang_flip(ones, beta);
+        swendsen_wang_flip(chess, beta);
+        steps += 1;
+    }
+    return steps;
+}
+
 int main(int argc, char** argv) {
-    int dim = 100;
-    int max_steps = 10000000;
-    int median;
-    double step_size = .02;
+    int dim = 50;
+    int max_steps = 30000000;
+    int med_steps, med_time;
+    double step_size = .01;
     double beta = 0;
     vector<int> trials(10, 0);
+    vector<double> times;
     ofstream file;
     file.open("swendsen-wang.csv");
 
-    while (median < max_steps) {
+    double b_crit = log(1 + sqrt(2)) / 2;
+    printf("%f is the critical beta\n", b_crit);
+
+    while (med_steps < max_steps && beta < b_crit * 2) {
+        chrono::duration<double, milli> diff;
+        times.clear();
         for (int i = 0; i < trials.size(); i++) {
+            auto start = chrono::steady_clock::now();
             trials[i] = glauber_ising_coupling(dim, 2 * beta, max_steps);
+            // trials[i] = swendsen_ising_magnetization(dim, 2 * beta, max_steps);
+            diff = std::chrono::steady_clock::now() - start;
+            times.push_back(diff.count());
         }
         sort(trials.begin(), trials.end());
-        median = trials[trials.size() / 2];
-        if (median < max_steps) {
-            printf("beta %f mixed in %d steps\n", beta, median);
-            file << beta << ", " << median << "\n";
+        sort(times.begin(), times.end());
+        med_steps = trials[trials.size() / 2];
+        med_time = times[times.size() / 2];
+        if (med_steps < max_steps) {
+            printf("beta %f mixed in %d steps %f ms\n", beta, med_steps, med_time);
+            file << beta << ", " << med_steps << ", " << med_time << "\n";
         } else {
             printf("beta %f failed to converge\n", beta);
         }
