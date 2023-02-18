@@ -6,6 +6,7 @@
 #include <cmath>
 #include <algorithm>
 #include <fstream>
+#include <cstring>
 
 using namespace std;
 
@@ -15,6 +16,7 @@ uniform_real_distribution<double> uniform(0.0,1.0);
 
 class Grid {
 public:
+    Grid() : Grid(1, 1) {}
     Grid(int dim, int colors) : Grid(dim, dim, colors) {}
     Grid(int w, int h, int colors) {
         this->w = w;
@@ -67,6 +69,19 @@ public:
         }
         cout << "\n";
     }
+    Grid& operator=(const Grid& other) {
+        this->w = other.w;
+        this->h = other.w;
+        this->size = other.size;
+        this->colors = other.colors;
+        delete[] this->graph;
+        delete[] this->counts;
+        this->graph = new int[this->size];
+        this->counts = new int[this->colors];
+        memcpy(this->graph, other.graph, sizeof(int) * this->size);
+        memcpy(this->counts, other.counts, sizeof(int) * this->colors);
+        return *this;
+    }
     bool operator==(const Grid& other) {
         if (this->w != other.w || this->h != other.w) return false;
         if (this->colors != other.colors) return false;
@@ -116,6 +131,23 @@ void glauber_ising_flip(Grid& g, int& index, double& beta, double& rand) {
     double beta_p = beta * counts[1];
     double prob_p = exp(beta_p) / (exp(beta_n) + exp(beta_p));
     g.set(index, (int)(rand <= prob_p));
+}
+
+void glauber_potts_flip(Grid& g, int& index, double& beta, double& rand) {
+    int* counts = new int[g.colors] {0};
+    double* expbs = new double[g.colors] {0};
+    double sum = 0.0;
+    sum_neighbors(g, index, counts);
+    for (int c = 0; c < g.colors; c++) {
+        sum += exp(beta * counts[c]);
+        expbs[c] = sum;
+    }
+    for (int c = 0; c < g.colors; c++) {
+        if (rand < (expbs[c] / sum)) {
+            g.set(index, c);
+            return;
+        }
+    }
 }
 
 int choose_color(int colors) {
@@ -196,6 +228,32 @@ int glauber_ising_coupling(int dim, double beta, int max_steps) {
     return steps;
 }
 
+bool grids_same(Grid grids[], int size) {
+    for (int i = 1; i < size; i++)
+        if (grids[0] != grids[i]) return false;
+    return true;
+}
+
+int glauber_potts_coupling(int dim, double beta, int max_steps, int colors) {
+    int index, steps = 0;
+    int* counts;
+    double rand;
+    bool converged = false;
+    Grid* grids = new Grid[colors];
+    for (int c = 0; c < colors; c++) {
+        grids[c] = Grid(dim, colors);
+        grids[c].set_all(c);
+    }
+    while (steps < max_steps && !grids_same(grids, colors)) {
+        index = choose_point(grids[0]);
+        rand = uniform(generator);
+        for (int c = 0; c < colors; c++)
+            glauber_potts_flip(grids[c], index, beta, rand);
+        steps++;
+    }
+    return steps;
+}
+
 int swendsen_ising_magnetization(int dim, double beta, int max_steps) {
     int r, c, steps = 0;
     int* counts;
@@ -216,7 +274,8 @@ int swendsen_ising_magnetization(int dim, double beta, int max_steps) {
 }
 
 int main(int argc, char** argv) {
-    int dim = 50;
+    int colors = 3;
+    int dim = 30;
     int max_steps = 30000000;
     int med_steps, med_time;
     double step_size = .01;
@@ -226,7 +285,7 @@ int main(int argc, char** argv) {
     ofstream file;
     file.open("swendsen-wang.csv");
 
-    double b_crit = log(1 + sqrt(2)) / 2;
+    double b_crit = log(1 + sqrt(colors)) / 2;
     printf("%f is the critical beta\n", b_crit);
 
     while (med_steps < max_steps && beta < b_crit * 2) {
@@ -234,9 +293,10 @@ int main(int argc, char** argv) {
         times.clear();
         for (int i = 0; i < trials.size(); i++) {
             auto start = chrono::steady_clock::now();
-            trials[i] = glauber_ising_coupling(dim, 2 * beta, max_steps);
+            // trials[i] = glauber_ising_coupling(dim, 2 * beta, max_steps);
             // trials[i] = swendsen_ising_magnetization(dim, 2 * beta, max_steps);
-            diff = std::chrono::steady_clock::now() - start;
+            trials[i] = glauber_potts_coupling(dim, 2 * beta, max_steps, colors);
+            diff = chrono::steady_clock::now() - start;
             times.push_back(diff.count());
         }
         sort(trials.begin(), trials.end());
