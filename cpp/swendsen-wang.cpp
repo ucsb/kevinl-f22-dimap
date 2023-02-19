@@ -6,6 +6,7 @@
 #include <cmath>
 #include <algorithm>
 #include <fstream>
+#include <string>
 #include <cstring>
 
 using namespace std;
@@ -135,19 +136,22 @@ void glauber_ising_flip(Grid& g, int& index, double& beta, double& rand) {
 
 void glauber_potts_flip(Grid& g, int& index, double& beta, double& rand) {
     int* counts = new int[g.colors] {0};
-    double* expbs = new double[g.colors] {0};
+    double* exps = new double[g.colors] {0};
     double sum = 0.0;
     sum_neighbors(g, index, counts);
     for (int c = 0; c < g.colors; c++) {
         sum += exp(beta * counts[c]);
-        expbs[c] = sum;
+        exps[c] = sum;
     }
+    sum = 1.0 / sum;
     for (int c = 0; c < g.colors; c++) {
-        if (rand < (expbs[c] / sum)) {
+        if (rand < (exps[c] * sum)) {
             g.set(index, c);
-            return;
+            break;
         }
     }
+    delete[] counts;
+    delete[] exps;
 }
 
 int choose_color(int colors) {
@@ -238,7 +242,6 @@ int glauber_potts_coupling(int dim, double beta, int max_steps, int colors) {
     int index, steps = 0;
     int* counts;
     double rand;
-    bool converged = false;
     Grid* grids = new Grid[colors];
     for (int c = 0; c < colors; c++) {
         grids[c] = Grid(dim, colors);
@@ -251,6 +254,7 @@ int glauber_potts_coupling(int dim, double beta, int max_steps, int colors) {
             glauber_potts_flip(grids[c], index, beta, rand);
         steps++;
     }
+    delete[] grids;
     return steps;
 }
 
@@ -275,15 +279,24 @@ int swendsen_ising_magnetization(int dim, double beta, int max_steps) {
 
 int main(int argc, char** argv) {
     int colors = 3;
-    int dim = 30;
-    int max_steps = 30000000;
-    int med_steps, med_time;
+    int dim = 100;
+    int max_steps = 50000000;
+    int med_steps;
+    double med_time;
     double step_size = .01;
     double beta = 0;
     vector<int> trials(10, 0);
     vector<double> times;
     ofstream file;
-    file.open("swendsen-wang.csv");
+
+    if (argc != 3) {
+        printf("Usage: swendsen-wang.cpp dim output-file\n");
+        exit(1);
+    }
+
+    dim = stoi(argv[1]);
+
+    file.open(string(argv[2]) + ".csv");
 
     double b_crit = log(1 + sqrt(colors)) / 2;
     printf("%f is the critical beta\n", b_crit);
@@ -305,7 +318,7 @@ int main(int argc, char** argv) {
         med_time = times[times.size() / 2];
         if (med_steps < max_steps) {
             printf("beta %f mixed in %d steps %f ms\n", beta, med_steps, med_time);
-            file << beta << ", " << med_steps << ", " << med_time << "\n";
+            file << beta << ", " << med_steps << ", " << fixed << med_time << "\n";
         } else {
             printf("beta %f failed to converge\n", beta);
         }
