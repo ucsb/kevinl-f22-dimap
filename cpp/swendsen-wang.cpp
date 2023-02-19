@@ -27,6 +27,7 @@ public:
         this->colors = colors;
         this->counts = new int[colors] {0};
         this->counts[0] = this->size;
+        this->target = (int)(1.0 / colors * this->size);
     }
     ~Grid() {
         delete[] graph;
@@ -104,7 +105,7 @@ public:
         return true;
     }
 
-    int w, h, size, colors;
+    int w, h, size, colors, target;
     int* graph;
     int* counts;
 };
@@ -134,7 +135,7 @@ void glauber_ising_flip(Grid& g, int& index, double& beta, double& rand) {
     g.set(index, (int)(rand <= prob_p));
 }
 
-void glauber_potts_flip(Grid& g, int& index, double& beta, double& rand) {
+void glauber_potts_flip(Grid& g, int index, double& beta, double rand) {
     int* counts = new int[g.colors] {0};
     double* exps = new double[g.colors] {0};
     double sum = 0.0;
@@ -255,6 +256,25 @@ int glauber_potts_coupling(int dim, double beta, int max_steps, int colors) {
         steps++;
     }
     delete[] grids;
+    return steps;
+}
+
+bool mag_converged(const Grid& grid) {
+    for (int c = 0; c < grid.colors; c++) {
+        if (abs(grid.counts[c] - grid.target) > grid.colors)
+            return false;
+    }
+    return true;
+}
+
+int glauber_potts_magnetization(int dim, double beta, int max_steps, int colors) {
+    int steps = 0;
+    Grid g(dim, colors);
+    g.set_all(0);
+    while (steps < max_steps && !mag_converged(g)) {
+        glauber_potts_flip(g, choose_point(g), beta, uniform(generator));
+        steps++;
+    }
     return steps;
 }
 
