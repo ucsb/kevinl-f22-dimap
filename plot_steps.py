@@ -1,44 +1,50 @@
 import sys
 import matplotlib.pyplot as plt
 
-if len(sys.argv) < 3:
-    sys.exit("usage: plot_steps.py fields csv-file csv-file2 ...")
+if len(sys.argv) < 2:
+    sys.exit("Usage: plot_steps.py csv-file csv-file2 ...")
+
+fields = []
+print("Enter labels for data fields (enter nothing when done)")
+while True:
+    field_label = input()
+    if len(field_label) == 0:
+        break
+    fields.append(field_label)
+print("Fields:", fields)
 
 # PyPlot color cycle for annotations
 cycle = plt.rcParams['axes.prop_cycle'].by_key()['color']
-
-fields = int(sys.argv[1])
-field_labels = []
-for i in range(fields):
-    field_labels.append(input(f"Label for field {i+1}: "))
-
 fig, ax = plt.subplots(1, 2, figsize=(10,4))
 
-for i in range(2, len(sys.argv)):
-    plot_label = input(f"Label for file {i-1}: ")
-    fieldlists = [[] for f in range(fields)]
+for i in range(1, len(sys.argv)):
     with open(sys.argv[i], 'r') as csv:
-        bvals = []
+        betas = []
+        field_data = [[] for f in range(len(fields))]
+        plot_label = input(f"Label for file {i}: ")
         line = csv.readline()
         while len(line) > 0:
             row = line.split(',')
-            bvals.append(float(row[0]))
-            fieldvals = row[1:]
-            for j in range(len(fieldvals)):
-                fieldlists[j].append(float(fieldvals[j]))
+            betas.append(float(row[0]))
+            data = row[1:]
+            if len(data) != len(fields):
+                sys.exit(f"Error: # of data fields in {sys.argv[i]} do not match # of labels")
+            for j in range(len(data)):
+                field_data[j].append(float(data[j]))
             line = csv.readline()
-        for j in range(fields):
-            ax[j].set_xlim(right=(bvals[-1]*1.1))
-            ax[j].plot(bvals, fieldlists[j], label=plot_label if j==0 else "")
+        for j in range(len(fields)):
+            ax[j].ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+            ax[j].set_xlim(right=(betas[-1]*1.1))
+            ax[j].plot(betas, field_data[j], label=plot_label if j==0 else "")
             ax[j].set_xlabel("Temperature β")
-            ax[j].set_ylabel(field_labels[j])
+            ax[j].set_ylabel(fields[j])
             ax[j].annotate(
-                "β={:.2f}".format(bvals[-1]),
-                xy=(bvals[-1], fieldlists[j][-1]),
+                "β={:.2f}".format(betas[-1]),
+                xy=(betas[-1], field_data[j][-1]),
                 textcoords="offset points",
                 xytext=(-2,-5),
                 ha='right',
-                color=cycle[i-2])
+                color=cycle[i-1])
 
 fig.suptitle(input("Enter title for plot: "))
 
@@ -48,7 +54,7 @@ while True:
     if len(specific_beta) == 0:
         break
     specific_beta = float(specific_beta)
-    for i in range(fields):
+    for i in range(len(fields)):
         ax[i].axvline(x = specific_beta, color = 'r', linestyle = '-', label="Critical β" if i==0 else "")
         ax[i].annotate(
             "β={:.2f}".format(specific_beta),
@@ -60,4 +66,6 @@ while True:
 
 fig.legend(loc="upper left")
 plt.subplots_adjust(wspace=0.3)
-plt.savefig("plot.png", facecolor='white')
+
+out_name = input("Output file name: ")
+plt.savefig(out_name + ".png" if len(out_name) > 0 else "plot.png", facecolor='white')
