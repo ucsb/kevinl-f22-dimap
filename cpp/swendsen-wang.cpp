@@ -96,14 +96,6 @@ public:
     bool operator!=(const Grid& other) {
         return !(*this == other);
     }
-    bool mag_match(const Grid& other) {
-        if (this->colors != other.colors) return false;
-        for (int i = 0; i < this->colors; i++) {
-            if (abs(this->counts[i] - other.counts[i]) > this->colors)
-                return false;
-        }
-        return true;
-    }
 
     int w, h, size, colors, target;
     int* graph;
@@ -278,20 +270,27 @@ int glauber_potts_magnetization(int dim, double beta, int max_steps, int colors)
     return steps;
 }
 
+bool mag_match(const Grid grids[], int num) {
+    for (int i = 0; i < num; i++) {
+        for (int j = i + 1; j < num; j++) {
+            for (int c = 0; c < grids[i].colors; c++) {
+                if (abs(grids[i].counts[c] - grids[j].counts[c]) > grids[i].colors)
+                    return false;
+            }
+        }
+    }
+    return true;
+}
+
 int swendsen_ising_magnetization(int dim, double beta, int max_steps) {
-    int r, c, steps = 0;
-    int* counts;
-    double rand;
-    Grid zeros(dim, 2);
-    Grid ones(dim, 2);
-    Grid chess(dim, 2);
-    zeros.set_all(0);
-    ones.set_all(1);
-    chess.chessboard();
-    while (steps < max_steps && !((zeros.mag_match(ones)) && (ones.mag_match(chess) && (zeros.mag_match(chess))))) {
-        swendsen_wang_flip(zeros, beta);
-        swendsen_wang_flip(ones, beta);
-        swendsen_wang_flip(chess, beta);
+    int steps = 0;
+    Grid grids[] = {Grid(dim, 2), Grid(dim, 2), Grid(dim, 2)};
+    grids[0].set_all(0);
+    grids[1].set_all(1);
+    grids[2].chessboard();
+    while (steps < max_steps && !mag_match(grids, 3)) {
+        for (int i = 0; i < 3; i++)
+            swendsen_wang_flip(grids[i], beta);
         steps += 1;
     }
     return steps;
