@@ -223,6 +223,8 @@ int main(int argc, char** argv) {
     vector<double> times;
     ofstream file;
 
+    setvbuf(stdout, NULL, _IOLBF, 0);
+
     if (argc != 3) {
         printf("Usage: swendsen-wang.cpp dim output-file\n");
         exit(1);
