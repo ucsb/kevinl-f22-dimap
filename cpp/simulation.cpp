@@ -19,6 +19,37 @@ public:
     int max_steps;
 };
 
+class Glauber_Ising_Coupling : public Simulation {
+public:
+    Glauber_Ising_Coupling(int dim, int max_steps) : Simulation(dim, max_steps) {}
+    int run(double beta) {
+        int index, steps = 0;
+        int* counts;
+        double rand;
+        Grid zeros(dim, 2);
+        Grid ones(dim, 2);
+        zeros.set_all(0);
+        ones.set_all(1);
+        while (steps < max_steps && ones != zeros) {
+            index = choose_point(zeros);
+            rand = uniform(generator);
+            glauber_ising_flip(zeros, index, beta, rand);
+            glauber_ising_flip(ones, index, beta, rand);
+            steps++;
+        }
+        return steps;
+    }
+private:
+    void glauber_ising_flip(Grid& g, int& index, double& beta, double& rand) {
+        int counts[2] {0};
+        sum_neighbors(g, index, counts);
+        double beta_n = beta * counts[0];
+        double beta_p = beta * counts[1];
+        double prob_p = exp(beta_p) / (exp(beta_n) + exp(beta_p));
+        g.set(index, (int)(rand <= prob_p));
+    }
+};
+
 class Glauber_Potts_Magnetization : public Simulation {
 public:
     Glauber_Potts_Magnetization(int dim, int max_steps, int colors) : Simulation(dim, max_steps) {
