@@ -20,27 +20,35 @@ fig, ax = plt.subplots(1, 2, figsize=(10,4))
 for i in range(1, len(sys.argv)):
     with open(sys.argv[i], 'r') as csv:
         betas = []
+        max_betas = [-1 for f in range(len(fields))]
+        max_data = [-1 for f in range(len(fields))]
         field_data = [[] for f in range(len(fields))]
         plot_label = input(f"Label for file {i}: ")
         line = csv.readline()
         while len(line) > 0:
             row = line.split(',')
-            betas.append(float(row[0]))
+            beta = float(row[0])
+            betas.append(beta)
             data = row[1:]
             if len(data) != len(fields):
                 sys.exit(f"Error: # of data fields in {sys.argv[i]} do not match # of labels")
             for j in range(len(data)):
-                field_data[j].append(float(data[j]))
+                datum = float(data[j])
+                field_data[j].append(datum)
+                if datum > max_data[j]:
+                    max_data[j] = datum
+                    max_betas[j] = beta
             line = csv.readline()
         for j in range(len(fields)):
             ax[j].ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-            ax[j].set_xlim(right=(betas[-1]*1.1))
+            if betas[-1] == max_betas[j] and max_betas[j]*1.1 > ax[j].get_xlim()[1]:
+                ax[j].set_xlim(right=(max_betas[j]*1.1))
             ax[j].plot(betas, field_data[j], label=plot_label if j==0 else "")
             ax[j].set_xlabel("Temperature β")
             ax[j].set_ylabel(fields[j])
             ax[j].annotate(
-                "β={:.2f}".format(betas[-1]),
-                xy=(betas[-1], field_data[j][-1]),
+                "β={:.2f}".format(max_betas[j]),
+                xy=(max_betas[j], max_data[j]),
                 textcoords="offset points",
                 xytext=(-2,-5),
                 ha='right',
