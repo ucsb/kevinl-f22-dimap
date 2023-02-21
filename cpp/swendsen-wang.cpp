@@ -27,7 +27,6 @@ public:
         this->colors = colors;
         this->counts = new int[colors] {0};
         this->counts[0] = this->size;
-        this->target = (int)(1.0 / colors * this->size);
     }
     ~Grid() {
         delete[] graph;
@@ -97,7 +96,7 @@ public:
         return !(*this == other);
     }
 
-    int w, h, size, colors, target;
+    int w, h, size, colors;
     int* graph;
     int* counts;
 };
@@ -251,19 +250,20 @@ int glauber_potts_coupling(int dim, double beta, int max_steps, int colors) {
     return steps;
 }
 
-bool mag_converged(const Grid& grid) {
+bool mag_converged(const Grid& grid, int& target) {
     for (int c = 0; c < grid.colors; c++) {
-        if (abs(grid.counts[c] - grid.target) > grid.colors)
+        if (abs(grid.counts[c] - target) > grid.colors)
             return false;
     }
     return true;
 }
 
 int glauber_potts_magnetization(int dim, double beta, int max_steps, int colors) {
-    int steps = 0;
+    int steps = 0, target;
     Grid g(dim, colors);
     g.set_all(0);
-    while (steps < max_steps && !mag_converged(g)) {
+    target = (int)(1.0 / colors * g.size);
+    while (steps < max_steps && !mag_converged(g, target)) {
         glauber_potts_flip(g, choose_point(g), beta, uniform(generator));
         steps++;
     }
