@@ -19,6 +19,52 @@ public:
     int max_steps;
 };
 
+class Glauber_Potts_Magnetization : public Simulation {
+public:
+    Glauber_Potts_Magnetization(int dim, int max_steps, int colors) : Simulation(dim, max_steps) {
+        this->colors = colors;
+    }
+    int run(double beta) {
+        int steps = 0, target;
+        Grid g(dim, colors);
+        g.set_all(0);
+        target = (int)(1.0 / colors * g.size);
+        while (steps < max_steps && !mag_converged(g, target)) {
+            glauber_potts_flip(g, choose_point(g), beta, uniform(generator));
+            steps++;
+        }
+        return steps;
+    }
+private:
+    bool mag_converged(const Grid& grid, int& target) {
+        for (int c = 0; c < grid.colors; c++) {
+            if (abs(grid.counts[c] - target) > grid.colors)
+                return false;
+        }
+        return true;
+    }
+    void glauber_potts_flip(Grid& g, int index, double& beta, double rand) {
+        int* counts = new int[g.colors] {0};
+        double* exps = new double[g.colors] {0};
+        double sum = 0.0;
+        sum_neighbors(g, index, counts);
+        for (int c = 0; c < g.colors; c++) {
+            sum += exp(beta * counts[c]);
+            exps[c] = sum;
+        }
+        sum = 1.0 / sum;
+        for (int c = 0; c < g.colors; c++) {
+            if (rand < (exps[c] * sum)) {
+                g.set(index, c);
+                break;
+            }
+        }
+        delete[] counts;
+        delete[] exps;
+    }
+    int colors;
+};
+
 class Swendsen_Wang_Ising_Magnetization : public Simulation {
 public:
     Swendsen_Wang_Ising_Magnetization(int dim, int max_steps) : Simulation(dim, max_steps) {}
