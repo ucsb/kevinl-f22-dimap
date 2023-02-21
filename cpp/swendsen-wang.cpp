@@ -7,99 +7,14 @@
 #include <algorithm>
 #include <fstream>
 #include <string>
-#include <cstring>
+
+#include "grid.hpp"
 
 using namespace std;
 
 unsigned seed = chrono::system_clock::now().time_since_epoch().count();
 default_random_engine generator(seed);
 uniform_real_distribution<double> uniform(0.0,1.0);
-
-class Grid {
-public:
-    Grid() : Grid(1, 1) {}
-    Grid(int dim, int colors) : Grid(dim, dim, colors) {}
-    Grid(int w, int h, int colors) {
-        this->w = w;
-        this->h = h;
-        this->size = w * h;
-        this->graph = new int[size];
-        this->colors = colors;
-        this->counts = new int[colors] {0};
-        this->counts[0] = this->size;
-    }
-    ~Grid() {
-        delete[] graph;
-        delete[] counts;
-    }
-    void set(int index, int new_val) {
-        int old_val = this->graph[index];
-        if (old_val != new_val) {
-            this->counts[old_val]--;
-            this->counts[new_val]++;
-        }
-        this->graph[index] = new_val;
-    }
-    void set_all(int color) {
-        for (int i = 0; i < this->size; i++)
-            this->graph[i] = color;
-        for (int i = 0; i < this->colors; i++)
-            this->counts[i] = 0;
-        this->counts[color] = this->size;
-    }
-    void chessboard() {
-        int start_color;
-        for (int i = 0; i < this->colors; i++)
-            counts[i] = 0;
-        for (int i = 0; i < this->h; i++) {
-            for (int j = 0; j < this->w; j++) {
-                this->graph[(i * this->w) + j] = (i + j) % this->colors;
-                this->counts[(i + j) % this->colors]++;
-            }
-        }
-    }
-    void print() {
-        for (int i = 0; i < this->size; i++) {
-            cout << this->graph[i] << " ";
-            if (i % this->w == this->w - 1)
-                cout << "\n";
-        }
-        cout << "Counts: ";
-        for (int i = 0; i < this->colors; i++) {
-            cout << counts[i] << " ";
-        }
-        cout << "\n";
-    }
-    Grid& operator=(const Grid& other) {
-        this->w = other.w;
-        this->h = other.w;
-        this->size = other.size;
-        this->colors = other.colors;
-        delete[] this->graph;
-        delete[] this->counts;
-        this->graph = new int[this->size];
-        this->counts = new int[this->colors];
-        memcpy(this->graph, other.graph, sizeof(int) * this->size);
-        memcpy(this->counts, other.counts, sizeof(int) * this->colors);
-        return *this;
-    }
-    bool operator==(const Grid& other) {
-        if (this->w != other.w || this->h != other.w) return false;
-        if (this->colors != other.colors) return false;
-        for (int i = 0; i < this->size; i++) {
-            if (this->graph[i] != other.graph[i])
-                return false;
-        }
-        return true;
-    }
-    bool operator!=(const Grid& other) {
-        return !(*this == other);
-    }
-
-    int w, h, size, colors;
-    int* graph;
-    int* counts;
-};
 
 int choose_point(const Grid& c) {
     return int(uniform(generator) * c.size);
