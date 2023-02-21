@@ -50,30 +50,12 @@ private:
     }
 };
 
-class Glauber_Potts_Magnetization : public Simulation {
+class Glauber_Potts : public Simulation {
 public:
-    Glauber_Potts_Magnetization(int dim, int max_steps, int colors) : Simulation(dim, max_steps) {
+    Glauber_Potts(int dim, int max_steps, int colors) : Simulation(dim, max_steps) {
         this->colors = colors;
     }
-    int run(double beta) {
-        int steps = 0, target;
-        Grid g(dim, colors);
-        g.set_all(0);
-        target = (int)(1.0 / colors * g.size);
-        while (steps < max_steps && !mag_converged(g, target)) {
-            glauber_potts_flip(g, choose_point(g), beta, uniform(generator));
-            steps++;
-        }
-        return steps;
-    }
-private:
-    bool mag_converged(const Grid& grid, int& target) {
-        for (int c = 0; c < grid.colors; c++) {
-            if (abs(grid.counts[c] - target) > grid.colors)
-                return false;
-        }
-        return true;
-    }
+protected:
     void glauber_potts_flip(Grid& g, int index, double& beta, double rand) {
         int* counts = new int[g.colors] {0};
         double* exps = new double[g.colors] {0};
@@ -94,6 +76,59 @@ private:
         delete[] exps;
     }
     int colors;
+};
+
+class Glauber_Potts_Coupling : public Glauber_Potts {
+public:
+    Glauber_Potts_Coupling(int dim, int max_steps, int colors) : Glauber_Potts(dim, max_steps, colors) {}
+    int run(double beta) {
+        int index, steps = 0;
+        double rand;
+        Grid* grids = new Grid[colors];
+        for (int c = 0; c < colors; c++) {
+            grids[c] = Grid(dim, colors);
+            grids[c].set_all(c);
+        }
+        while (steps < max_steps && !grids_same(grids, colors)) {
+            index = choose_point(grids[0]);
+            rand = uniform(generator);
+            for (int c = 0; c < colors; c++)
+                glauber_potts_flip(grids[c], index, beta, rand);
+            steps++;
+        }
+        delete[] grids;
+        return steps;
+    }
+private:
+    bool grids_same(Grid grids[], int size) {
+        for (int i = 1; i < size; i++)
+            if (grids[0] != grids[i]) return false;
+        return true;
+    }
+};
+
+class Glauber_Potts_Magnetization : public Glauber_Potts {
+public:
+    Glauber_Potts_Magnetization(int dim, int max_steps, int colors) : Glauber_Potts(dim, max_steps, colors) {}
+    int run(double beta) {
+        int steps = 0, target;
+        Grid g(dim, colors);
+        g.set_all(0);
+        target = (int)(1.0 / colors * g.size);
+        while (steps < max_steps && !mag_converged(g, target)) {
+            glauber_potts_flip(g, choose_point(g), beta, uniform(generator));
+            steps++;
+        }
+        return steps;
+    }
+private:
+    bool mag_converged(const Grid& grid, int& target) {
+        for (int c = 0; c < grid.colors; c++) {
+            if (abs(grid.counts[c] - target) > grid.colors)
+                return false;
+        }
+        return true;
+    }
 };
 
 class Swendsen_Wang_Ising_Magnetization : public Simulation {
