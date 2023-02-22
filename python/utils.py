@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from statistics import median
 from math import exp
+import time
 
 class Potts_Grid:
     def __init__(self, shape, fill_value, colors):
@@ -63,13 +64,18 @@ def simulate(mixer, step_size):
     max_iters = mixer.max_iters
     bvals = []
     bsteps = []
+    times = []
     b = 0
     while True:
         trials = []
+        trial_times = []
         for i in range(10):
+            start = time.perf_counter()
             steps, converged = mixer.run(b)
             trials.append(steps)
+            trial_times.append(time.perf_counter() - start)
         med_steps = median(trials)
+        med_time = median(trial_times)
         if med_steps >= max_iters:
             print("beta {:f} failed to converge".format(b))
             return bvals, bsteps

@@ -138,11 +138,11 @@ max_steps = 500
 b_crit = log(1+sqrt(colors))
 print("Critical β for {:d} colors: {:.2f}".format(colors, b_crit))
 
-beta = .8
-step_size = 0.01
+beta = 0
+step_size = 0.05
 bvals = []
 bsteps = []
-while True:
+while True and beta < (b_crit * 2):
     trials = []
     for i in range(10):
         steps = magnetization(max_steps)

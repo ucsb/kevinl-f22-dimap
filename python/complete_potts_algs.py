@@ -5,8 +5,8 @@ import random
 from math import sqrt, log
 import utils
 
-if len(sys.argv) != 5:
-    sys.exit("Usage: complete_potts_algs.py colors grid_dim step_size max_steps")
+if len(sys.argv) != 6:
+    sys.exit("Usage: complete_potts_algs.py colors grid_dim step_size max_steps b_first")
 
 colors = int(sys.argv[1])
 if colors > 255 or colors < 2:
@@ -15,21 +15,31 @@ dim = int(sys.argv[2])
 shape = (dim, dim)
 step_size = float(sys.argv[3])
 max_steps = int(sys.argv[4])
+B_u = float(sys.argv[5])
 
 random.seed(None)
 
 b_crit = log(colors - 1) * (colors - 1) / (colors - 2)
 print("Critical beta for {:d} colors: {:.2f}".format(colors, b_crit))
-plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Critical β")
+# plt.axvline(x = b_crit, color = 'r', linestyle = '-', label="Second critical β")
+# plt.annotate(
+#     "β={:.2f}".format(b_crit),
+#     xy=(b_crit, max_steps),
+#     textcoords="offset points",
+#     xytext=(0, -15),
+#     ha='right',
+#     color="red")
+
+plt.axvline(x = B_u, color = 'r', linestyle = '-', label="First critical β")
 plt.annotate(
     "β={:.2f}".format(b_crit),
-    xy=(b_crit, max_steps),
+    xy=(B_u, max_steps),
     textcoords="offset points",
     xytext=(0, -15),
     ha='right',
     color="red")
 
-bvals, bsteps = utils.simulate(cpts.Magnetization(cpts.heat_bath_flip, colors, shape, max_steps), step_size)
+bvals, bsteps = utils.simulate(cpts.Forward_Coupling(cpts.heat_bath_flip, colors, shape, max_steps), step_size)
 plt.plot(bvals, bsteps, color="steelblue", label="Heat bath")
 plt.annotate(
     "β={:.2f}".format(bvals[-1]),
@@ -39,7 +49,7 @@ plt.annotate(
     ha='right',
     color="steelblue")
 
-bvals, bsteps = utils.simulate(cpts.Magnetization(cpts.metropolis_flip, colors, shape, max_steps), step_size)
+bvals, bsteps = utils.simulate(cpts.Forward_Coupling(cpts.metropolis_flip, colors, shape, max_steps), step_size)
 plt.plot(bvals, bsteps, color="darkorange", label="Metropolis filter")
 plt.annotate(
     "β={:.2f}".format(bvals[-1]),
@@ -50,7 +60,7 @@ plt.annotate(
     color="darkorange")
 
 plt.xlim(right=(b_crit + step_size))
-plt.ylim(top=max_steps)
+# plt.ylim(top=max_steps)
 plt.xlabel("Temperature β")
 plt.ylabel("Steps to converge (in MC steps)")
 plt.title("Potts model algorithms ({:d} colors, {:d}x{:d} mean field)".format(colors, dim, dim))
