@@ -35,7 +35,6 @@ void Grid::set_all(int color) {
 }
 
 void Grid::chessboard() {
-    int start_color;
     for (int i = 0; i < this->colors; i++)
         counts[i] = 0;
     for (int i = 0; i < this->h; i++) {
