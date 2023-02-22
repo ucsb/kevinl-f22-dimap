@@ -1,19 +1,19 @@
 CFLAGS = -Wall -pedantic -std=c++20
-EXECS = ising report
+EXECS = potts-mixing
 
 all: $(EXECS)
 
-glauber.o: glauber.hpp glauber.cpp
-	g++ $(CFLAGS) -c -o glauber.o glauber.cpp
+grid.o: grid.hpp grid.cpp
+	g++ $(CFLAGS) -c -o grid.o grid.cpp
 
-coupling.o: coupling.hpp coupling.cpp
-	g++ $(CFLAGS) -c -o coupling.o coupling.cpp
+utils.o: utils.hpp utils.cpp grid.hpp
+	g++ $(CFLAGS) -c -o utils.o utils.cpp
 
-ising: ising.cpp coupling.hpp coupling.o glauber.hpp glauber.o
-	g++ $(CFLAGS) -o ising ising.cpp coupling.o glauber.o
+simulation.o: simulation.hpp simulation.cpp
+	g++ $(CFLAGS) -c -o simulation.o simulation.cpp
 
-report: report.cpp coupling.hpp coupling.o glauber.hpp glauber.o
-	g++ $(CFLAGS) -o report report.cpp coupling.o glauber.o
+potts-mixing: potts-mixing.cpp simulation.o grid.o utils.o
+	g++ $(CFLAGS) -o potts-mixing potts-mixing.cpp simulation.o grid.o utils.o
 
 clean:
-	/bin/rm -f *.o core ising
+	/bin/rm -f *.o core $(EXECS)
