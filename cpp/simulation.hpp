@@ -130,34 +130,10 @@ private:
     }
 };
 
-class Swendsen_Wang_Ising_Magnetization : public Simulation {
+class Swendsen_Wang_Ising : public Simulation {
 public:
-    Swendsen_Wang_Ising_Magnetization(int dim, int max_steps) : Simulation(dim, max_steps) {}
-    int run (double beta) override {
-        int steps = 0;
-        Grid grids[] = {Grid(dim, 2), Grid(dim, 2), Grid(dim, 2)};
-        grids[0].set_all(0);
-        grids[1].set_all(1);
-        grids[2].chessboard();
-        while (steps < max_steps && !mag_match(grids, 3)) {
-            for (int i = 0; i < 3; i++)
-                swendsen_wang_flip(grids[i], beta);
-            steps += 1;
-        }
-        return steps;
-    }
-private:
-    bool mag_match(const Grid grids[], int num) {
-        for (int i = 0; i < num; i++) {
-            for (int j = i + 1; j < num; j++) {
-                for (int c = 0; c < grids[i].colors; c++) {
-                    if (abs(grids[i].counts[c] - grids[j].counts[c]) > grids[i].colors)
-                        return false;
-                }
-            }
-        }
-        return true;
-    }
+    Swendsen_Wang_Ising(int dim, int max_steps) : Simulation(dim, max_steps) {}
+protected:
     void swendsen_wang_flip(Grid& g, double& beta) {
         int q_head = 0, q_tail = 0, index, old_color, new_color;
         int top, bottom, left, right;
@@ -203,6 +179,132 @@ private:
         }
         delete[] visited;
         delete[] queue;
+    }
+    void swendsen_wang_complete_flip(Grid& g, double& beta) {
+        int q_head = 0, q_tail = 0, index, old_color, new_color;
+        bool* visited = new bool[g.size];
+        memset((void*)visited, 1, sizeof(bool) * g.size);
+        int* queue = new int[g.size];
+        for (int i = 0; i < g.size; i++) {
+            if (visited[i] == false) {
+                visited[i] = true;
+                queue[q_tail] = i;
+                q_tail++;
+                old_color = g.graph[i];
+                new_color = choose_color(g.colors);
+                while (q_head != q_tail) {
+                    index = queue[q_head];
+                    q_head++;
+                    g.set(index, new_color);
+                    for (int j = 0; j < g.size; j++) {
+                        if (visited[j] == false && g.graph[j] == old_color && keep_edge(beta)) {
+                            visited[j] = true;
+                            queue[q_tail] = j;
+                            q_tail++;
+                        }
+                    }
+                }
+            }
+        }
+        delete[] visited;
+        delete[] queue;
+    }
+};
+
+class Swendsen_Wang_Potts_Magnetization_Complete: public Swendsen_Wang_Ising {
+public:
+    Swendsen_Wang_Potts_Magnetization_Complete(int dim, int max_steps, int colors) : Swendsen_Wang_Ising(dim, max_steps) {
+        this->colors = colors;
+    }
+    int run(double beta) {
+        int steps = 0;
+        Grid* grids = new Grid[colors + 1];
+        for (int c = 0; c < colors; c++) {
+            grids[c] = Grid(dim, colors);
+            grids[c].set_all(c);
+        }
+        grids[colors] = Grid(dim, colors);
+        grids[colors].chessboard();
+        while (steps < max_steps && !mag_match(grids, colors+1)) {
+            for (int i = 0; i < colors+1; i++)
+                swendsen_wang_complete_flip(grids[i], beta);
+            steps += 1;
+        }
+        delete[] grids;
+        return steps;
+    }
+private:
+    bool mag_match(const Grid grids[], int num) {
+        for (int i = 0; i < num; i++) {
+            for (int j = i + 1; j < num; j++) {
+                for (int c = 0; c < grids[i].colors; c++) {
+                    if (abs(grids[i].counts[c] - grids[j].counts[c]) > grids[i].colors)
+                        return false;
+                }
+            }
+        }
+        return true;
+    }
+    int colors;
+};
+
+class Swendsen_Wang_Ising_Magnetization_Complete : public Swendsen_Wang_Ising {
+public:
+    Swendsen_Wang_Ising_Magnetization_Complete(int dim, int max_steps) : Swendsen_Wang_Ising(dim, max_steps) {}
+    int run(double beta) {
+        int steps = 0;
+        Grid grids[] = {Grid(dim, 2), Grid(dim, 2), Grid(dim, 2)};
+        grids[0].set_all(0);
+        grids[1].set_all(1);
+        grids[2].chessboard();
+        while (steps < max_steps && !mag_match(grids, 3)) {
+            for (int i = 0; i < 3; i++)
+                swendsen_wang_complete_flip(grids[i], beta);
+            steps += 1;
+        }
+        return steps;
+    }
+private:
+    bool mag_match(const Grid grids[], int num) {
+        for (int i = 0; i < num; i++) {
+            for (int j = i + 1; j < num; j++) {
+                for (int c = 0; c < grids[i].colors; c++) {
+                    if (abs(grids[i].counts[c] - grids[j].counts[c]) > grids[i].colors)
+                        return false;
+                }
+            }
+        }
+        return true;
+    }
+};
+
+class Swendsen_Wang_Ising_Magnetization : public Swendsen_Wang_Ising {
+public:
+    Swendsen_Wang_Ising_Magnetization(int dim, int max_steps) : Swendsen_Wang_Ising(dim, max_steps) {}
+    int run (double beta) {
+        int steps = 0;
+        Grid grids[] = {Grid(dim, 2), Grid(dim, 2), Grid(dim, 2)};
+        grids[0].set_all(0);
+        grids[1].set_all(1);
+        grids[2].chessboard();
+        while (steps < max_steps && !mag_match(grids, 3)) {
+            for (int i = 0; i < 3; i++)
+                swendsen_wang_flip(grids[i], beta);
+            steps += 1;
+        }
+        return steps;
+    }
+private:
+    bool mag_match(const Grid grids[], int num) {
+        for (int i = 0; i < num; i++) {
+            for (int j = i + 1; j < num; j++) {
+                for (int c = 0; c < grids[i].colors; c++) {
+                    if (abs(grids[i].counts[c] - grids[j].counts[c]) > grids[i].colors)
+                        return false;
+                }
+            }
+        }
+        return true;
     }
 };
 
