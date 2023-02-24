@@ -183,7 +183,7 @@ protected:
     void swendsen_wang_complete_flip(Grid& g, double& beta) {
         int q_head = 0, q_tail = 0, index, old_color, new_color;
         bool* visited = new bool[g.size];
-        memset((void*)visited, 1, sizeof(bool) * g.size);
+        std::fill(visited, visited + g.size, 0);
         int* queue = new int[g.size];
         for (int i = 0; i < g.size; i++) {
             if (visited[i] == false) {
@@ -209,31 +209,13 @@ protected:
         delete[] visited;
         delete[] queue;
     }
-};
-
-class Swendsen_Wang_Potts_Magnetization_Complete: public Swendsen_Wang_Ising {
-public:
-    Swendsen_Wang_Potts_Magnetization_Complete(int dim, int max_steps, int colors) : Swendsen_Wang_Ising(dim, max_steps) {
-        this->colors = colors;
-    }
-    int run(double beta) {
-        int steps = 0;
-        Grid* grids = new Grid[colors + 1];
-        for (int c = 0; c < colors; c++) {
-            grids[c] = Grid(dim, colors);
-            grids[c].set_all(c);
+    bool mag_converged(const Grid& g, int& target) {
+        for (int c = 0; c < g.colors; c++) {
+            if (abs(g.counts[c] - target) > g.colors)
+                return false;
         }
-        grids[colors] = Grid(dim, colors);
-        grids[colors].chessboard();
-        while (steps < max_steps && !mag_match(grids, colors+1)) {
-            for (int i = 0; i < colors+1; i++)
-                swendsen_wang_complete_flip(grids[i], beta);
-            steps += 1;
-        }
-        delete[] grids;
-        return steps;
+        return true;
     }
-private:
     bool mag_match(const Grid grids[], int num) {
         for (int i = 0; i < num; i++) {
             for (int j = i + 1; j < num; j++) {
@@ -245,6 +227,27 @@ private:
         }
         return true;
     }
+};
+
+class Swendsen_Wang_Potts_Magnetization_Complete: public Swendsen_Wang_Ising {
+public:
+    Swendsen_Wang_Potts_Magnetization_Complete(int dim, int max_steps, int colors) : Swendsen_Wang_Ising(dim, max_steps) {
+        this->colors = colors;
+    }
+    int run(double beta) {
+        int steps = 0;
+        double beta_param = -2 * log(1 - (beta / (dim * dim)));
+        Grid grids[] = {Grid(dim, colors), Grid(dim, colors)};
+        grids[0].set_all(0);
+        grids[1].chessboard();
+        while (steps < max_steps && !mag_match(grids, 2)) {
+            for (int i = 0; i < 2; i++)
+                swendsen_wang_complete_flip(grids[i], beta_param);
+            steps += 1;
+        }
+        return steps;
+    }
+private:
     int colors;
 };
 

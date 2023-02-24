@@ -7,17 +7,22 @@ void simulate(std::ostream& out, Simulation& sim, double beta_start, double beta
     std::vector<int> trials;
     std::vector<double> times;
 
-    while (med_steps < sim.max_steps && beta < beta_end) {
+    while (med_steps < sim.max_steps && beta <= beta_end) {
         trials.clear();
         times.clear();
         std::chrono::duration<double, std::milli> diff;
         for (int i = 0; i < runs; i++) {
+            printf("\rrun %d/%d", i+1, runs);
+            fflush(stdout);
             auto start = std::chrono::steady_clock::now();
-            steps = sim.run(2 * beta);
+            steps = sim.run(beta);
             diff = std::chrono::steady_clock::now() - start;
             trials.push_back(steps);
             times.push_back(diff.count());
+            fflush(stdout);
         }
+        printf("\n");
+        fflush(stdout);
         sort(trials.begin(), trials.end());
         sort(times.begin(), times.end());
         med_steps = trials[trials.size() / 2];
@@ -28,6 +33,7 @@ void simulate(std::ostream& out, Simulation& sim, double beta_start, double beta
         } else {
             printf("beta %f failed to converge\n", beta);
         }
+        fflush(stdout);
         beta += beta_step;
     };
 }
