@@ -31,7 +31,7 @@ for i in range(1, len(sys.argv)):
             betas.append(beta)
             data = row[1:]
             if len(data) != len(fields):
-                sys.exit(f"Error: # of data fields in {sys.argv[i]} do not match # of labels")
+                sys.exit(f"Error: number of data fields in {sys.argv[i]} does not match number of labels")
             for j in range(len(data)):
                 datum = float(data[j])
                 field_data[j].append(datum)
@@ -41,8 +41,8 @@ for i in range(1, len(sys.argv)):
             line = csv.readline()
         for j in range(len(fields)):
             ax[j].ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-            if betas[-1] == max_betas[j] and max_betas[j]*1.1 > ax[j].get_xlim()[1]:
-                ax[j].set_xlim(right=(max_betas[j]*1.1))
+            if betas[-1] == max_betas[j] and max_betas[j] >= ax[j].get_xlim()[1]:
+                ax[j].set_xlim(right=(max_betas[j]*1.05))
             ax[j].plot(betas, field_data[j], label=plot_label if j==0 else "")
             ax[j].set_xlabel("Temperature β")
             ax[j].set_ylabel(fields[j])
@@ -57,13 +57,15 @@ for i in range(1, len(sys.argv)):
 fig.suptitle(input("Enter title for plot: "))
 
 print("Specific β to plot (enter nothing when done)")
+labeled_crit = False
 while True:
     specific_beta = input()
     if len(specific_beta) == 0:
         break
     specific_beta = float(specific_beta)
     for i in range(len(fields)):
-        ax[i].axvline(x = specific_beta, color = 'r', linestyle = '-', label="Critical β" if i==0 else "")
+        ax[i].axvline(x = specific_beta, color = 'r', linestyle = '-', label="Critical β" if labeled_crit==False else "")
+        labeled_crit = True
         ax[i].annotate(
             "β={:.2f}".format(specific_beta),
             xy=(specific_beta, 0),
@@ -71,6 +73,8 @@ while True:
             xytext=(-2,-2),
             ha='right',
             color="red")
+        if specific_beta >= ax[i].get_xlim()[1]:
+            ax[i].set_xlim(right=(specific_beta*1.05))
 
 fig.legend(loc="upper left")
 plt.subplots_adjust(wspace=0.3)
