@@ -32,18 +32,19 @@ for i in range(1, len(sys.argv)):
             times.append(float(time))
 
         field_data = [steps, times]
+        samples = np.linspace(sizes[0], sizes[-1])
+
         for j in range(len(fields)):
             if function == 'exp':
                 fit = np.polyfit(sizes, np.log(field_data[j]), 1)
-                pred = [np.exp(fit[1] + fit[0] * n) for n in sizes]
+                pred = [np.exp(fit[1] + fit[0] * n) for n in samples]
                 ratio = max(field_data[j]) / max(pred)
-                ax[j].plot(sizes, [p * ratio for p in pred], label=r'${:.2f} \times \exp({:f}n)$'.format(np.exp(fit[1]), fit[0]))
+                ax[j].plot(samples, [p * ratio for p in pred], label=r'${:.2f} \times \exp({:f}n)$'.format(np.exp(fit[1]), fit[0]))
             else:
-                base = function
-                fit = np.polyfit(sizes, np.power(field_data[j], (1/base)), 1)
-                pred = [(fit[1] + fit[0] * n**base) for n in sizes]
+                fit = np.polyfit(sizes, np.power(field_data[j], (1/function)), 1)
+                pred = np.power(np.clip([fit[1] + fit[0] * n for n in samples], a_min=0, a_max=None), function)
                 ratio = max(field_data[j]) / max(pred)
-                ax[j].plot(sizes, [p * ratio for p in pred], label=r'${:.2f} + {:.2f}n^{{{:.2f}}}$'.format(ratio*fit[1], ratio*fit[0], base))
+                ax[j].plot(samples, [p * ratio for p in pred], label=r'$\min(0, {:.2f} + {:.2f}n)^{{{:.2f}}}$'.format(ratio*fit[1], ratio*fit[0], function))
 
             ax[j].ticklabel_format(style='sci', axis='y', scilimits=(0,0))
             ax[j].plot(sizes, field_data[j], label="Simulation time")
