@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <ostream>
 #include <cstdio>
+#include <pthread.h>
 
 #include "grid.hpp"
 #include "utils.hpp"
@@ -18,6 +19,15 @@ public:
     int dim;
     int max_steps;
 };
+
+struct thread_arg {
+    Simulation* sim;
+    double beta;
+    std::vector<int>* trials;
+    std::vector<double>* times;
+};
+
+void* run_sim(void* arg);
 
 class Glauber_Ising_Coupling : public Simulation {
 public:
@@ -311,4 +321,4 @@ private:
     }
 };
 
-void simulate(std::ostream& out, Simulation& sim, double beta_start, double beta_end, double beta_step, int runs);
+void simulate(std::ostream& out, Simulation& sim, double beta_start, double beta_end, int betas, int runs);
