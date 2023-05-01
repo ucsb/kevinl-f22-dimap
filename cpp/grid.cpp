@@ -106,7 +106,7 @@ bool Grid::operator!=(const Grid& other) {
     return !(*this == other);
 }
 
-void sum_neighbors(const Grid& g, int index, unsigned counts[]) {
+void sum_neighbors(const Grid& g, int index, int counts[]) {
     counts[g.graph[mod(index+(int)g.w, g.size)]]++;
     counts[g.graph[mod(index-(int)g.w, g.size)]]++;
     counts[g.graph[mod(index-1, g.size)]]++;
