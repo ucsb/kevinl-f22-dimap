@@ -9,10 +9,10 @@
 class Grid {
 public:
     Grid();
-    Grid(unsigned dim, unsigned char colors);
-    Grid(unsigned w, unsigned h, unsigned char colors);
+    Grid(int dim, unsigned char colors);
+    Grid(int w, int h, unsigned char colors);
     ~Grid();
-    void set(unsigned index, unsigned char new_color);
+    void set(int index, unsigned char new_color);
     void set_all(unsigned char color);
     void chessboard();
     void rand();
@@ -24,23 +24,23 @@ public:
     bool operator==(const Grid& other);
     bool operator!=(const Grid& other);
 
-    unsigned w, h, size;
-    unsigned char colors;
+    int w, h, size;
+    int colors;
     unsigned char* graph;
-    unsigned* counts;
+    int* counts;
 };
 
-unsigned choose_point(const Grid& c);
+int choose_point(const Grid& c);
 
-void sum_neighbors(const Grid& g, int index, unsigned counts[]);
+void sum_neighbors(const Grid& g, int index, int counts[]);
 
-void print_array(const Grid grids[], unsigned size);
+void print_array(const Grid grids[], int size);
 
-void print_array(const Grid** grids, unsigned size);
+void print_array(const Grid** grids, int size);
 
-void print_array(std::ostream& os, const Grid grids[], unsigned size);
+void print_array(std::ostream& os, const Grid grids[], int size);
 
-void print_array(std::ostream& os, const Grid** grids, unsigned size);
+void print_array(std::ostream& os, const Grid** grids, int size);
 
 bool mag_diff(const Grid& g1, const Grid& g2);
 
