@@ -45,9 +45,12 @@ void Grid::chessboard() {
 }
 
 void Grid::rand() {
+    std::default_random_engine generator(seed);
+    std::uniform_int_distribution<> rand_color(0, colors - 1);
+
     std::fill(counts, counts + this->colors, 0);
     for (int i = 0; i < size; i++) {
-        graph[i] = choose_color(colors);
+        graph[i] = rand_color(generator);
         counts[graph[i]]++;
     }
 }
