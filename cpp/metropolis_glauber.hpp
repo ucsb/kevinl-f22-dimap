@@ -3,11 +3,11 @@
 
 class Metropolis_Glauber_Grid : public Chain {
 public:
-    Metropolis_Glauber_Grid() : Metropolis_Glauber_Grid(1, 1) {}
-    Metropolis_Glauber_Grid(int dim, int colors) : Chain(dim, 2) {}
-    ~Metropolis_Glauber_Grid() {}
+    Metropolis_Glauber_Grid() : Metropolis_Glauber_Grid(1) {}
+    Metropolis_Glauber_Grid(int dim) : Chain(dim, 2) {}
+    ~Metropolis_Glauber_Grid() = default;
     virtual int run(float beta) override;
-    void flip(Grid& g, float beta, int index, unsigned char new_color, float rand);
+    void flip(Grid& g, float beta, int index, color_t new_color, float rand);
 };
 
 class Metropolis_CFTP_Grid: public Metropolis_Glauber_Grid {
