@@ -1,12 +1,12 @@
 #include "grid.hpp"
 
 Grid::Grid() : Grid(1, 1) {}
-Grid::Grid(int dim, unsigned char colors) : Grid(dim, dim, colors) {}
-Grid::Grid(int w, int h, unsigned char colors) {
+Grid::Grid(int dim, color_t colors) : Grid(dim, dim, colors) {}
+Grid::Grid(int w, int h, color_t colors) {
     this->w = w;
     this->h = h;
     this->size = w * h;
-    this->graph = new unsigned char[size];
+    this->graph = new color_t[size];
     std::fill(graph, graph + this->size, 0);
     this->colors = colors;
     this->counts = new int[colors];
@@ -19,8 +19,8 @@ Grid::~Grid() {
     delete[] counts;
 }
 
-void Grid::set(int index, unsigned char new_color) {
-    unsigned char old_color = this->graph[index];
+void Grid::set(int index, color_t new_color) {
+    color_t old_color = this->graph[index];
     if (old_color != new_color) {
         this->counts[old_color]--;
         this->counts[new_color]++;
@@ -28,7 +28,7 @@ void Grid::set(int index, unsigned char new_color) {
     this->graph[index] = new_color;
 }
 
-void Grid::set_all(unsigned char color) {
+void Grid::set_all(color_t color) {
     std::fill(graph, graph + this->size, color);
     std::fill(counts, counts + this->colors, 0);
     this->counts[color] = this->size;
@@ -58,7 +58,7 @@ void Grid::print() const {
 
 void Grid::print(std::ostream& os) const {
     for (int i = 0; i < this->size; i++) {
-        os << this->graph[i] << " ";
+        os << (int)(this->graph[i]) << " ";
         if (i % this->w == this->w - 1)
             os << "\n";
     }
@@ -71,7 +71,7 @@ void Grid::print_counts() const {
 
 void Grid::print_counts(std::ostream& os) const {
     os << "Counts: ";
-    for (int i = 0; i < this->colors; i++) {
+    for (color_t i = 0; i < this->colors; i++) {
         os << counts[i] << " ";
     }
     os << "\n";
@@ -84,9 +84,9 @@ Grid& Grid::operator=(const Grid& other) {
     this->colors = other.colors;
     delete[] this->graph;
     delete[] this->counts;
-    this->graph = new unsigned char[this->size];
+    this->graph = new color_t[this->size];
     this->counts = new int[this->colors];
-    memcpy(this->graph, other.graph, sizeof(unsigned char) * this->size);
+    memcpy(this->graph, other.graph, sizeof(color_t) * this->size);
     memcpy(this->counts, other.counts, sizeof(int) * this->colors);
 
     return *this;
@@ -165,7 +165,7 @@ void print_array(std::ostream& os, const Grid grids[], int size) {
             grid_h = grids[i].h;
             for (int w = 0; w < max_w; w++) {
                 if (w < grid_w && h < grid_h) {
-                    os << grids[i].graph[h * grid_w + w] << ' ';
+                    os << (int)(grids[i].graph[h * grid_w + w]) << ' ';
                 }
             }
             os << ' ';

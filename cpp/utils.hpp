@@ -7,6 +7,8 @@
 
 extern unsigned seed;
 
+typedef unsigned char color_t;
+
 // Avoids negative remainders
 int mod(int a, int b);
 

@@ -9,11 +9,11 @@
 class Grid {
 public:
     Grid();
-    Grid(int dim, unsigned char colors);
-    Grid(int w, int h, unsigned char colors);
+    Grid(int dim, color_t colors);
+    Grid(int w, int h, color_t colors);
     ~Grid();
-    void set(int index, unsigned char new_color);
-    void set_all(unsigned char color);
+    void set(int index, color_t new_color);
+    void set_all(color_t color);
     void chessboard();
     void rand();
     void print() const;
@@ -26,7 +26,7 @@ public:
 
     int w, h, size;
     int colors;
-    unsigned char* graph;
+    color_t* graph;
     int* counts;
 };
 

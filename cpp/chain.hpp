@@ -1,10 +1,12 @@
 #ifndef CHAIN_H
 #define CHAIN_H
 
+#include "utils.hpp"
+
 class Chain {
 public:
     Chain() : Chain(1, 1) {}
-    Chain(int dim, int colors) {
+    Chain(int dim, color_t colors) {
         this->dim = dim;
         this->size = dim * dim;
         this->colors = colors;
@@ -17,7 +19,7 @@ public:
         return *this;
     }
     int dim, size;
-    int colors;
+    color_t colors;
 };
 
 #endif
