@@ -56,29 +56,44 @@ void Metropolis_Glauber_Grid::flip(Grid& g, float beta, int index, color_t new_c
         g.set(index, new_color);
 }
 
-int Metropolis_CFTP_Grid::run(float beta) {
+int Metropolis_CFTP_Grid::run(float beta)
+{
     int end;
     std::vector<int> indices;
     std::vector<float> rands;
-    std::vector<unsigned char> colors;
+    std::vector<color_t> colors;
+
     Grid grids[2];
-    for (int c = 0; c < 2; c++) {
+    for (int c = 0; c < 2; c++)
+    {
         grids[c] = Grid(dim, 2);
         grids[c].set_all(c);
     }
-    indices.push_back(choose_point(grids[0]));
-    rands.push_back(uniform(generator));
-    colors.push_back(2*uniform(generator));
-    while (grids[0] != grids[1]) {
+
+    std::mt19937 i_generator{std::random_device{}()};
+    std::mt19937 c_generator{std::random_device{}()};
+    std::mt19937 p_generator{std::random_device{}()};
+    std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
+    std::uniform_int_distribution<> rand_color(0, grids[0].colors - 1);
+    std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
+
+    indices.push_back(rand_index(i_generator));
+    colors.push_back(rand_color(c_generator));
+    rands.push_back(rand_prob(p_generator));
+
+    while (!tot_mag(grids[0], grids[1]))
+    {
         end = indices.size() - 1;
-        for (int i = end; i >= 0; i--) {
+        for (int i = end; i >= 0; i--)
+        {
             for (int c = 0; c < 2; c++)
                 flip(grids[c], beta, indices[i], colors[i], rands[i]);
-            indices.push_back(choose_point(grids[0]));
-            rands.push_back(uniform(generator));
-            colors.push_back(2*uniform(generator));
+            indices.push_back(rand_index(i_generator));
+            colors.push_back(rand_color(c_generator));
+            rands.push_back(rand_prob(p_generator));
         }
     }
+
     return (int)indices.size();
 }
 

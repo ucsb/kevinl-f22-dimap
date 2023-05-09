@@ -77,13 +77,13 @@ int Heat_Bath_CFTP_Grid::run(float beta)
         probs[i] = exp(beta * i) / (exp(beta * i) + exp(beta * (4 - i)));
     }
 
-    std::default_random_engine i_generator(seed);
-    std::default_random_engine r_generator(seed);
-    std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
+    std::mt19937 i_generator{std::random_device{}()};
+    std::mt19937 p_generator{std::random_device{}()};
     std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
+    std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
 
     indices.push_back(rand_index(i_generator));
-    rands.push_back(rand_prob(r_generator));
+    rands.push_back(rand_prob(p_generator));
 
     while (!tot_mag(grids[0], grids[1]))
     {
@@ -93,7 +93,7 @@ int Heat_Bath_CFTP_Grid::run(float beta)
             for (int c = 0; c < 2; c++)
                 flip(grids[c], beta, indices[i], rands[i], probs);
             indices.push_back(rand_index(i_generator));
-            rands.push_back(rand_prob(r_generator));
+            rands.push_back(rand_prob(p_generator));
         }
     }
 
