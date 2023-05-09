@@ -30,6 +30,5 @@ class Metropolis_CFTP_Complete : public Metropolis_Glauber_Complete {
 public:
     Metropolis_CFTP_Complete() : Metropolis_CFTP_Complete(1) {}
     Metropolis_CFTP_Complete(int dim) : Metropolis_Glauber_Complete(dim) {}
-    ~Metropolis_CFTP_Complete() {}
     virtual int run(float beta) override;
 };
