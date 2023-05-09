@@ -30,8 +30,6 @@ public:
     int* counts;
 };
 
-int choose_point(const Grid& c);
-
 void sum_neighbors(const Grid& g, int index, int counts[]);
 
 void print_array(const Grid grids[], int size);

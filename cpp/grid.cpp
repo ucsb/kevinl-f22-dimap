@@ -118,9 +118,6 @@ void sum_neighbors(const Grid& g, int index, int sums[])
     sums[g.graph[prior_rows + mod(index + 1, g.w)]]++;
 }
 
-int choose_point(const Grid& g) {
-    return (int)(uniform(generator) * g.size);
-}
 
 void print_array(const Grid grids[], int size) {
     print_array(std::cout, grids, size);
