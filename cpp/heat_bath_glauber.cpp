@@ -17,10 +17,10 @@ int Heat_Bath_Glauber_Grid::run(float beta)
         probs[i] = exp(beta * i) / (exp(beta * i) + exp(beta * (4 - i)));
     }
 
-    int point;
+    int index;
     float rand;
-    std::default_random_engine generator(seed);
-    std::default_random_engine generator2(seed);
+    std::mt19937 i_generator{std::random_device{}()};
+    std::mt19937 p_generator{std::random_device{}()};
     std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
     std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
 
@@ -29,10 +29,10 @@ int Heat_Bath_Glauber_Grid::run(float beta)
     {
         for (int i = 0; i < grids[0].size; i++)
         {
-            point = rand_index(generator);
-            rand = rand_prob(generator2);
-            flip(grids[0], beta, point, rand, probs);
-            flip(grids[1], beta, point, rand, probs);
+            index = rand_index(i_generator);
+            rand = rand_prob(p_generator);
+            flip(grids[0], beta, index, rand, probs);
+            flip(grids[1], beta, index, rand, probs);
         }
         steps += grids[0].size;
     }
