@@ -116,8 +116,8 @@ int Heat_Bath_Glauber_Complete::run(float beta)
 
     int point;
     float rand;
-    std::default_random_engine generator(seed);
-    std::default_random_engine generator2(seed);
+    std::mt19937 i_generator{std::random_device{}()};
+    std::mt19937 p_generator{std::random_device{}()};
     std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
     std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
 
@@ -125,8 +125,8 @@ int Heat_Bath_Glauber_Complete::run(float beta)
     {
         for (int i = 0; i < grids[0].size; i++)
         {
-            point = rand_index(generator);
-            rand = rand_prob(generator2);
+            point = rand_index(i_generator);
+            rand = rand_prob(p_generator);
             flip(grids[0], beta_scaled, point, rand);
             flip(grids[1], beta_scaled, point, rand);
         }
