@@ -8,11 +8,3 @@ std::uniform_real_distribution<float> uniform(0.0,1.0);
 int mod(int a, int b) {
     return (b + (a % b)) % b;
 }
-
-unsigned char choose_color(unsigned char colors) {
-    return (unsigned char)(uniform(generator) * colors);
-}
-
-bool keep_edge(double& beta) {
-    return uniform(generator) > exp(-1 * beta);
-}
