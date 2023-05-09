@@ -13,7 +13,7 @@ public:
 class Metropolis_CFTP_Grid: public Metropolis_Glauber_Grid {
 public:
     Metropolis_CFTP_Grid() : Metropolis_CFTP_Grid(1) {}
-    Metropolis_CFTP_Grid(int dim) : Metropolis_Glauber_Grid(dim, 2) {}
+    Metropolis_CFTP_Grid(int dim) : Metropolis_Glauber_Grid(dim) {}
     int run(float beta) override;
 };
 
