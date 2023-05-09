@@ -106,12 +106,13 @@ bool Grid::operator!=(const Grid& other) {
     return !(*this == other);
 }
 
-void sum_neighbors(const Grid& g, int index, int counts[]) {
+void sum_neighbors(const Grid& g, int index, int sums[])
+{
     int prior_rows = index / g.w * g.w;
-    counts[g.graph[mod(index + g.w, g.size)]]++;
-    counts[g.graph[mod(index - g.w, g.size)]]++;
-    counts[g.graph[prior_rows + mod(index - 1, g.w)]]++;
-    counts[g.graph[prior_rows + mod(index + 1, g.w)]]++;
+    sums[g.graph[mod(index + g.w, g.size)]]++;
+    sums[g.graph[mod(index - g.w, g.size)]]++;
+    sums[g.graph[prior_rows + mod(index - 1, g.w)]]++;
+    sums[g.graph[prior_rows + mod(index + 1, g.w)]]++;
 }
 
 int choose_point(const Grid& g) {
