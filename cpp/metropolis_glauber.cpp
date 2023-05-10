@@ -101,11 +101,12 @@ int Metropolis_Glauber_Complete::run(float beta)
 {
     int steps = 0;
 
-    Grid grids[2];
-    grids[0] = Grid(dim, colors);
-    grids[1] = Grid(dim, colors);
-    grids[0].set_all(0);
-    grids[1].set_all(1);
+    Grid* grids = new Grid[colors];
+    for (color_t c = 0; c < colors; c++)
+    {
+        grids[c] = Grid(dim, colors);
+        grids[c].set_all(c);
+    }
 
     float beta_scaled = -1 * log(1 - (2 * beta / grids[0].size));
 
@@ -119,15 +120,17 @@ int Metropolis_Glauber_Complete::run(float beta)
     std::uniform_int_distribution<> rand_color(0, grids[0].colors - 1);
     std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
 
-    while (!tot_mag(grids[0], grids[1]))
+    while (counts_diff(grids, colors))
     {
         for (int i = 0; i < grids[0].size; i++)
         {
             index = rand_index(i_generator);
             color = rand_color(c_generator);
             rand = rand_prob(p_generator);
-            flip(grids[0], beta_scaled, index, color, rand);
-            flip(grids[1], beta_scaled, index, color, rand);
+            for (color_t c = 0; c < colors; c++)
+            {
+                flip(grids[c], beta_scaled, index, color, rand);
+            }
         }
         steps += grids[0].size;
     }
@@ -147,11 +150,19 @@ void Metropolis_Glauber_Complete::flip(Grid& g, float beta, int index, color_t n
     }
     else
     {
-        int mchrome_old = 0;
-        int mchrome_new = 0;
+        /*
+        If a site is flipped to a new color, there are <count> number of
+        other sites which create edges with the new vertex
+        */
 
-        if (g.counts[new_color] > 0)
-            mchrome_new = g.counts[new_color];
+        int mchrome_new = g.counts[new_color];
+
+        /*
+        If the site had edges to other sites, there the number of monochromatic
+        edges will go down by <count> - 1 (one is the current site itself)
+        */
+
+        int mchrome_old = 0;
         if (g.counts[old_color] > 1)
             mchrome_old = 1 - g.counts[old_color];
 
