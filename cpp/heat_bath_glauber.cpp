@@ -4,17 +4,11 @@ int Heat_Bath_Glauber_Grid::run(float beta)
 {
     int steps = 0;
 
-    Grid grids[2];
-    grids[0] = Grid(dim, colors);
-    grids[1] = Grid(dim, colors);
-    grids[0].set_all(0);
-    grids[1].set_all(1);
-
-    // Precompute probabilities of flipping positive
-    float* probs = new float[5];
-    for (int i = 0; i < 5; i++)
+    Grid* grids = new Grid[colors];
+    for (color_t c = 0; c < colors; c++)
     {
-        probs[i] = exp(beta * i) / (exp(beta * i) + exp(beta * (4 - i)));
+        grids[c] = Grid(dim, colors);
+        grids[c].set_all(c);
     }
 
     int index;
@@ -24,35 +18,52 @@ int Heat_Bath_Glauber_Grid::run(float beta)
     std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
     std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
 
-    // while (grids[0] != grids[1]) {
-    while (!tot_mag(grids[0], grids[1]))
+    while (counts_diff(grids, colors))
     {
         for (int i = 0; i < grids[0].size; i++)
         {
             index = rand_index(i_generator);
             rand = rand_prob(p_generator);
-            flip(grids[0], beta, index, rand, probs);
-            flip(grids[1], beta, index, rand, probs);
+            for (color_t c = 0; c < colors; c++)
+            {
+                flip(grids[c], beta, index, rand);
+            }
         }
         steps += grids[0].size;
     }
 
-    delete[] probs;
-
+    delete[] grids;
     return steps;
 }
 
-void Heat_Bath_Glauber_Grid::flip(Grid& g, float beta, int index, float rand, float* probs)
+void Heat_Bath_Glauber_Grid::flip(Grid& g, float beta, int index, float rand)
 {
     // Count neighbors of each color for the given vertex
     int* sums = new int[g.colors];
     std::fill(sums, sums + g.colors, 0);
     sum_neighbors(g, index, sums);
 
-    // Index into array of probabilities of flipping positive
-    float prob_pos = probs[sums[1]];
-    g.set(index, (rand <= prob_pos) ? 1 : 0);
+    // Calculate probability weight denominators
+    float* weights = new float[g.colors];
+    float sum = 0.0;
+    for (color_t c = 0; c < g.colors; c++)
+    {
+        sum += exp(beta * sums[c]);
+        weights[c] = sum;
+    }
 
+    // Normalize weights and randomly set a new color
+    sum = 1.0 / sum;
+    for (color_t c = 0; c < g.colors; c++)
+    {
+        if (rand < (weights[c] * sum))
+        {
+            g.set(index, c);
+            break;
+        }
+    }
+
+    delete[] weights;
     delete[] sums;
 }
 
