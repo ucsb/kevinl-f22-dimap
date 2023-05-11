@@ -204,3 +204,13 @@ bool mag_diff(const Grid& g1, const Grid& g2) {
 
     return false;
 }
+
+bool mag_diff(const Grid grids[], int len) {
+    for (int i = 0; i < len - 1; i++) {
+        for (int j = i + 1; j < len; j++) {
+            if (mag_diff(grids[i], grids[j]))
+                return true;
+        }
+    }
+    return false;
+}
