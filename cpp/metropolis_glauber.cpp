@@ -192,6 +192,7 @@ int Metropolis_Glauber_Complete::run(float beta)
         steps += grids[0].size;
     }
 
+    delete[] grids;
     return steps;
 }
 
