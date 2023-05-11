@@ -22,8 +22,8 @@ public:
 class Heat_Bath_Glauber_Complete : public Chain
 {
 public:
-    Heat_Bath_Glauber_Complete() : Heat_Bath_Glauber_Complete(1) {}
-    Heat_Bath_Glauber_Complete(int dim) : Chain(dim, 2) {}
+    Heat_Bath_Glauber_Complete() : Heat_Bath_Glauber_Complete(1, 2) {}
+    Heat_Bath_Glauber_Complete(int dim, color_t colors) : Chain(dim, colors) {}
     ~Heat_Bath_Glauber_Complete() = default;
     virtual int run(float beta) override;
     void flip(Grid& g, float beta, int index, float rand);
@@ -33,6 +33,6 @@ class Heat_Bath_CFTP_Complete : public Heat_Bath_Glauber_Complete
 {
 public:
     Heat_Bath_CFTP_Complete() : Heat_Bath_CFTP_Complete(1) {}
-    Heat_Bath_CFTP_Complete(int dim) : Heat_Bath_Glauber_Complete(dim) {}
+    Heat_Bath_CFTP_Complete(int dim) : Heat_Bath_Glauber_Complete(dim, 2) {}
     int run(float beta) override;
 };

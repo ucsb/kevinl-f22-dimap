@@ -117,11 +117,12 @@ int Heat_Bath_Glauber_Complete::run(float beta)
 {
     int steps = 0;
 
-    Grid grids[2];
-    grids[0] = Grid(dim, colors);
-    grids[1] = Grid(dim, colors);
-    grids[0].set_all(0);
-    grids[1].set_all(1);
+    Grid* grids = new Grid[colors];
+    for (color_t c = 0; c < colors; c++)
+    {
+        grids[c] = Grid(dim, colors);
+        grids[c].set_all(c);
+    }
 
     float beta_scaled = -1 * log(1 - (2 * beta / grids[0].size));
 
@@ -132,31 +133,48 @@ int Heat_Bath_Glauber_Complete::run(float beta)
     std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
     std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
 
-    while (!tot_mag(grids[0], grids[1]))
+    while (counts_diff(grids, colors))
     {
         for (int i = 0; i < grids[0].size; i++)
         {
             point = rand_index(i_generator);
             rand = rand_prob(p_generator);
-            flip(grids[0], beta_scaled, point, rand);
-            flip(grids[1], beta_scaled, point, rand);
+            for (color_t c = 0; c < colors; c++)
+            {
+                flip(grids[c], beta_scaled, point, rand);
+            }
         }
         steps += grids[0].size;
     }
 
+    delete[] grids;
     return steps;
 }
 
 void Heat_Bath_Glauber_Complete::flip(Grid& g, float beta, int index, float rand)
 {
     int my_spin = g.graph[index];
+    float* weights = new float[g.colors];
+    float sum = 0.0;
 
     // Configuration weight calculations
-    float exp_beta_n = exp(beta * (g.counts[0] - (my_spin == 0)));
-    float exp_beta_p = exp(beta * (g.counts[1] - (my_spin == 1)));
+    for (color_t c = 0; c < g.colors; c++)
+    {
+        sum += exp(beta * (g.counts[c] - (my_spin == c)));
+        weights[c] = sum;
+    }
 
-    // Accept new state with calculated probability and update grid
-    g.set(index, (rand <= exp_beta_p / (exp_beta_n + exp_beta_p)));
+    // Normalize weights and randomly set a color
+    sum = 1.0 / sum;
+    for (color_t c = 0; c < g.colors; c++)
+    {
+        if (rand <= (weights[c] * sum)) {
+            g.set(index, c);
+            break;
+        }
+    }
+
+    delete[] weights;
 }
 
 int Heat_Bath_CFTP_Complete::run(float beta)
