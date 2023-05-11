@@ -32,13 +32,11 @@ public:
 
 void sum_neighbors(const Grid& g, int index, int counts[]);
 
-void print_array(const Grid grids[], int size);
+void print_grid_array(const Grid grids[], int size);
 
-void print_array(const Grid** grids, int size);
+void print_grid_array(std::ostream& os, const Grid grids[], int size);
 
-void print_array(std::ostream& os, const Grid grids[], int size);
-
-void print_array(std::ostream& os, const Grid** grids, int size);
+void print_grid_row(std::ostream& os, const Grid grids[], int size);
 
 bool mag_diff(const Grid& g1, const Grid& g2);
 

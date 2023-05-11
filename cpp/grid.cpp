@@ -118,42 +118,11 @@ void sum_neighbors(const Grid& g, int index, int sums[])
     sums[g.graph[prior_rows + mod(index + 1, g.w)]]++;
 }
 
-
-void print_array(const Grid grids[], int size) {
-    print_array(std::cout, grids, size);
+void print_grid_array(const Grid grids[], int size) {
+    print_grid_array(std::cout, grids, size);
 }
 
-void print_array(const Grid** grids, int size) {
-    print_array(std::cout, grids, size);
-}
-
-void print_array(std::ostream& os, const Grid** grids, int size) {
-    int max_w = 0, max_h = 0, grid_w, grid_h;
-    for (int i = 0; i < size; i++) {
-        if (grids[i]->w > max_w) max_w = grids[i]->w;
-        if (grids[i]->w > max_h) max_h = grids[i]->h;
-    }
-
-    for (int h = 0; h < max_h; h++) {
-        for (int i = 0; i < size; i++) {
-            grid_w = grids[i]->w;
-            grid_h = grids[i]->h;
-            for (int w = 0; w < max_w; w++) {
-                if (w < grid_w && h < grid_h) {
-                    os << grids[i]->graph[h * grid_w + w] << ' ';
-                }
-            }
-            os << ' ';
-        }
-        os << '\n';
-    }
-
-    for (int i = 0; i < size; i++) {
-        grids[i]->print_counts();
-    }
-}
-
-void print_array(std::ostream& os, const Grid grids[], int size) {
+void print_grid_array(std::ostream& os, const Grid grids[], int size) {
     int max_w = 0, max_h = 0, grid_w, grid_h;
     for (int i = 0; i < size; i++) {
         if (grids[i].w > max_w) max_w = grids[i].w;
@@ -175,6 +144,7 @@ void print_array(std::ostream& os, const Grid grids[], int size) {
     }
 
     for (int i = 0; i < size; i++) {
+        os << "grid " << &(grids[i]) << " (graph " << (void*) grids[i].graph << ") ";
         grids[i].print_counts();
     }
 }
