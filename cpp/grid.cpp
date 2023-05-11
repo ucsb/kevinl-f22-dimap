@@ -109,6 +109,32 @@ bool Grid::operator!=(const Grid& other) {
     return !(*this == other);
 }
 
+bool counts_diff(const Grid& g1, const Grid& g2)
+{
+    if (g1.colors != g2.colors)
+        return true;
+    for (color_t c = 0; c < g1.colors; c++)
+    {
+        if (g1.counts[c] != g2.counts[c])
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool counts_diff(const Grid grids[], int size) {
+    for (int i = 0; i < size - 1; i++)
+    {
+        for (int j = i + 1; j < size; j++)
+        {
+            if (counts_diff(grids[i], grids[j]))
+                return true;
+        }
+    }
+    return false;
+}
+
 void sum_neighbors(const Grid& g, int index, int sums[])
 {
     int prior_rows = index / g.w * g.w;
