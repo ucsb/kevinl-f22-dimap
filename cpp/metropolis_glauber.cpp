@@ -4,11 +4,12 @@ int Metropolis_Glauber_Grid::run(float beta)
 {
     int steps = 0;
 
-    Grid grids[2];
-    grids[0] = Grid(dim, colors);
-    grids[1] = Grid(dim, colors);
-    grids[0].set_all(0);
-    grids[1].set_all(1);
+    Grid* grids = new Grid[colors];
+    for (color_t c = 0; c < colors; c++)
+    {
+        grids[c] = Grid(dim, colors);
+        grids[c].set_all(c);
+    }
 
     int index;
     color_t color;
@@ -20,28 +21,31 @@ int Metropolis_Glauber_Grid::run(float beta)
     std::uniform_int_distribution<> rand_color(0, grids[0].colors - 1);
     std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
 
-    while (!tot_mag(grids[0], grids[1]))
+    while (counts_diff(grids, colors))
     {
         for (int i = 0; i < grids[0].size; i++)
         {
             index = rand_index(i_generator);
             color = rand_color(c_generator);
             rand = rand_prob(p_generator);
-            flip(grids[0], beta, index, color, rand);
-            flip(grids[1], beta, index, color, rand);
+
+            for (color_t c = 0; c < colors; c++)
+            {
+                flip(grids[c], beta, index, color, rand);
+            }
         }
         steps += grids[0].size;
     }
 
+    delete[] grids;
     return steps;
 }
 
 void Metropolis_Glauber_Grid::flip(Grid& g, float beta, int index, color_t new_color, float rand)
 {
     // Count neighbors of each color for the given vertex
-    int sums[2];
-    sums[0] = 0;
-    sums[1] = 0;
+    int* sums = new int[colors];
+    std::fill(sums, sums + colors, 0);
     sum_neighbors(g, index, sums);
 
     // Index into neighbor sums based on spin
@@ -54,6 +58,8 @@ void Metropolis_Glauber_Grid::flip(Grid& g, float beta, int index, color_t new_c
     // Accept new state with calculated probability and update grid
     if (rand <= prob_accept)
         g.set(index, new_color);
+
+    delete[] sums;
 }
 
 int Metropolis_CFTP_Grid::run(float beta)
