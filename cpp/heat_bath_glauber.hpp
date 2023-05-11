@@ -15,7 +15,7 @@ class Heat_Bath_CFTP_Grid: public Heat_Bath_Glauber_Grid
 {
 public:
     Heat_Bath_CFTP_Grid() : Heat_Bath_CFTP_Grid(1) {}
-    Heat_Bath_CFTP_Grid(int dim) : Heat_Bath_Glauber_Grid(dim) {}
+    Heat_Bath_CFTP_Grid(int dim) : Heat_Bath_Glauber_Grid(dim, 2) {}
     int run(float beta) override;
 };
 

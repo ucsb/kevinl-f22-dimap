@@ -102,7 +102,7 @@ int Heat_Bath_CFTP_Grid::run(float beta)
         for (int i = end; i >= 0; i--)
         {
             for (int c = 0; c < 2; c++)
-                flip(grids[c], beta, indices[i], rands[i], probs);
+                flip(grids[c], beta, indices[i], rands[i]);
             indices.push_back(rand_index(i_generator));
             rands.push_back(rand_prob(p_generator));
         }
