@@ -4,11 +4,11 @@
 class Heat_Bath_Glauber_Grid : public Chain
 {
 public:
-    Heat_Bath_Glauber_Grid() : Heat_Bath_Glauber_Grid(1) {}
-    Heat_Bath_Glauber_Grid(int dim) : Chain(dim, 2) {}
+    Heat_Bath_Glauber_Grid() : Heat_Bath_Glauber_Grid(1, 2) {}
+    Heat_Bath_Glauber_Grid(int dim, color_t colors) : Chain(dim, colors) {}
     ~Heat_Bath_Glauber_Grid() = default;
     virtual int run(float beta) override;
-    void flip(Grid& g, float beta, int index, float rand, float* probs);
+    void flip(Grid& g, float beta, int index, float rand);
 };
 
 class Heat_Bath_CFTP_Grid: public Heat_Bath_Glauber_Grid
