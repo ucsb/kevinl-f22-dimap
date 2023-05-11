@@ -30,6 +30,10 @@ public:
     int* counts;
 };
 
+bool counts_diff(const Grid& g1, const Grid& g2);
+
+bool counts_diff(const Grid grids[], int size);
+
 void sum_neighbors(const Grid& g, int index, int counts[]);
 
 void print_grid_array(const Grid grids[], int size);
