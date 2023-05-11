@@ -7,6 +7,7 @@ public:
     Metropolis_Glauber_Grid(int dim, color_t colors) : Chain(dim, colors) {}
     ~Metropolis_Glauber_Grid() = default;
     virtual int run(float beta) override;
+    void run_counts(float beta, std::ofstream& os);
     void flip(Grid& g, float beta, int index, color_t new_color, float rand);
 };
 
