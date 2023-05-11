@@ -41,6 +41,57 @@ int Metropolis_Glauber_Grid::run(float beta)
     return steps;
 }
 
+void Metropolis_Glauber_Grid::run_counts(float beta, std::ofstream& os)
+{
+    int steps = 0;
+
+    Grid* grids = new Grid[colors];
+    for (color_t c = 0; c < colors; c++)
+    {
+        grids[c] = Grid(dim, colors);
+        grids[c].set_all(c);
+    }
+
+    int index;
+    color_t color;
+    float rand;
+    std::mt19937 i_generator{std::random_device{}()};
+    std::mt19937 c_generator{std::random_device{}()};
+    std::mt19937 p_generator{std::random_device{}()};
+    std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
+    std::uniform_int_distribution<> rand_color(0, grids[0].colors - 1);
+    std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
+
+    while (counts_diff(grids, colors))
+    {
+        os << steps;
+        for (color_t g = 0; g < colors; g++)
+        {
+            int sum = 0;
+            for (color_t c = 0; c < colors; c++)
+            {
+                sum += (c * grids[g].counts[c]);
+            }
+            os << ',' << sum;
+        }
+        os << '\n';
+
+        for (int i = 0; i < grids[0].size; i++)
+        {
+            index = rand_index(i_generator);
+            color = rand_color(c_generator);
+            rand = rand_prob(p_generator);
+            for (color_t c = 0; c < colors; c++)
+            {
+                flip(grids[c], beta, index, color, rand);
+            }
+        }
+        steps += grids[0].size;
+    }
+
+    delete[] grids;
+}
+
 void Metropolis_Glauber_Grid::flip(Grid& g, float beta, int index, color_t new_color, float rand)
 {
     // Count neighbors of each color for the given vertex
