@@ -149,6 +149,15 @@ void print_grid_array(std::ostream& os, const Grid grids[], int size) {
     }
 }
 
+bool tot_mag(const Grid& g1, const Grid& g2) {
+    int sum1 = 0, sum2 = 0, c;
+    for (c = 0; c < g1.colors; c++)
+        sum1 += (c * g1.counts[c]);
+    for (c = 0; c < g2.colors; c++)
+        sum2 += (c * g2.counts[c]);
+    return (sum1 == sum2);
+}
+
 bool mag_diff(const Grid& g1, const Grid& g2) {
     if (g1.colors != g2.colors)
         return true;

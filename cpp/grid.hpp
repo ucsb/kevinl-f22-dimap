@@ -36,6 +36,8 @@ void print_grid_array(const Grid grids[], int size);
 
 void print_grid_array(std::ostream& os, const Grid grids[], int size);
 
+bool tot_mag(const Grid& g1, const Grid& g2);
+
 bool mag_diff(const Grid& g1, const Grid& g2);
 
 bool mag_diff(const Grid grids[], int len);
