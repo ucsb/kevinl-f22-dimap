@@ -45,12 +45,12 @@ void Grid::chessboard() {
 }
 
 void Grid::rand() {
-    std::default_random_engine generator(seed);
+    std::mt19937 c_generator{std::random_device{}()};
     std::uniform_int_distribution<> rand_color(0, colors - 1);
 
-    std::fill(counts, counts + this->colors, 0);
+    std::fill(counts, counts + colors, 0);
     for (int i = 0; i < size; i++) {
-        graph[i] = rand_color(generator);
+        graph[i] = rand_color(c_generator);
         counts[graph[i]]++;
     }
 }
@@ -188,6 +188,73 @@ bool mag_diff(const Grid grids[], int len) {
     for (int i = 0; i < len - 1; i++) {
         for (int j = i + 1; j < len; j++) {
             if (mag_diff(grids[i], grids[j]))
+                return true;
+        }
+    }
+    return false;
+}
+
+bool counts_diff(const Grid& g1, const Grid& g2)
+{
+    if (g1.colors != g2.colors)
+        return true;
+    for (color_t c = 0; c < g1.colors; c++)
+    {
+        if (g1.counts[c] != g2.counts[c])
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool counts_diff_sorted(const Grid& g1, const Grid& g2)
+{
+    if (g1.colors != g2.colors)
+        return true;
+
+    bool return_me = false;
+    int* counts1 = new int[g1.colors];
+    int* counts2 = new int[g2.colors];
+    memcpy(counts1, g1.counts, sizeof(int) * g1.colors);
+    memcpy(counts2, g2.counts, sizeof(int) * g2.colors);
+
+    std::sort(counts1, counts1 + g1.colors);
+    std::sort(counts2, counts2 + g2.colors);
+
+    for (int c = 0; c < g1.colors; c++) {
+        if (counts1[c] != counts2[c]) {
+            return_me = true;
+            break;
+        }
+    }
+
+    delete[] counts1;
+    delete[] counts2;
+
+    return return_me;
+}
+
+bool counts_diff(const Grid grids[], int size)
+{
+    for (int i = 0; i < size - 1; i++)
+    {
+        for (int j = i + 1; j < size; j++)
+        {
+            if (counts_diff(grids[i], grids[j]))
+                return true;
+        }
+    }
+    return false;
+}
+
+bool counts_diff(const Grid grids[], int size, bool (*counts_diff)(const Grid&, const Grid&))
+{
+    for (int i = 0; i < size - 1; i++)
+    {
+        for (int j = i + 1; j < size; j++)
+        {
+            if (counts_diff(grids[i], grids[j]))
                 return true;
         }
     }
