@@ -39,3 +39,6 @@
 *.png
 
 __pycache__
+
+# Results directory
+results*
