@@ -1,6 +1,6 @@
 #include <fstream>
 #include <string>
-// #include "swendsen_wang.hpp"
+#include "swendsen_wang.hpp"
 #include "metropolis_glauber.hpp"
 #include "heat_bath_glauber.hpp"
 // #include "mcmcmc.hpp"
@@ -20,7 +20,7 @@ void* run_sim(void* arg) {
     thread_arg* ta = (thread_arg*)arg;
     auto start = std::chrono::steady_clock::now();
     int steps = ta->chain->run(ta->beta);
-    chrono::duration<float, std::milli> diff = std::chrono::steady_clock::now() - start;
+    std::chrono::duration<float, std::milli> diff = std::chrono::steady_clock::now() - start;
     ta->trials->push_back(steps);
     ta->times->push_back(diff.count());
 
@@ -85,15 +85,16 @@ int main(int argc, char** argv)
 
         for (int i = 0; i < runs; i++)
         {
-            // tas[i].chain = new Swendsen_Wang_Grid(dim);
-            // tas[i].chain = new Swendsen_Wang_Complete(dim);
+            // tas[i].chain = new Swendsen_Wang_Grid(dim, colors);
+            tas[i].chain = new Swendsen_Wang_Complete(dim, colors);
+            // tas[i].chain = new Wolff_Complete(dim, colors);
             // tas[i].chain = new MCMCMC_Grid(dim, 2, dim);
             // tas[i].chain = new Metropolis_Glauber_Grid(dim, colors);
             // tas[i].chain = new Metropolis_CFTP_Grid(dim);
             // tas[i].chain = new Metropolis_Glauber_Complete(dim, colors);
             // tas[i].chain = new Metropolis_CFTP_Complete(dim);
             // tas[i].chain = new Heat_Bath_Glauber_Grid(dim, colors);
-            tas[i].chain = new Heat_Bath_Glauber_Grid(dim);
+            // tas[i].chain = new Heat_Bath_Glauber_Grid(dim);
             // tas[i].chain = new Heat_Bath_CFTP_Grid(dim);
             // tas[i].chain = new Heat_Bath_Glauber_Complete(dim, colors);
             // tas[i].chain = new Heat_Bath_CFTP_Complete(dim);
