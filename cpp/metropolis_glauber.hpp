@@ -39,7 +39,15 @@ public:
     Metropolis_Glauber_Complete(int dim, color_t colors) : Chain(dim, colors) {}
     ~Metropolis_Glauber_Complete() = default;
     virtual int run(float beta) override;
+    int run_mag(float beta, int max_steps);
     void flip(Grid& g, float beta, int index, color_t new_color, float rand);
+protected:
+    std::mt19937 i_generator{std::random_device{}()};
+    std::mt19937 c_generator{std::random_device{}()};
+    std::mt19937 p_generator{std::random_device{}()};
+    std::uniform_int_distribution<> rand_index{0, size - 1};
+    std::uniform_int_distribution<> rand_color{0, colors - 1};
+    std::uniform_real_distribution<float> rand_prob{0.0, 1.0};
 };
 
 class Metropolis_CFTP_Complete : public Metropolis_Glauber_Complete {
