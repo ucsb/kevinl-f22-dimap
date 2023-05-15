@@ -11,7 +11,6 @@ public:
     virtual int run(float beta) override;
     int run_exact(float beta);
     int run_counts(float beta);
-    int run_counts_sorted(float beta);
     int run_gelman_rubin(float beta);
     int run_mag(float beta, int max_steps);
     void log_counts(float beta, std::ofstream& os);

@@ -9,8 +9,6 @@ int Metropolis_Glauber_Grid::run(float beta)
         case 1:
             return run_counts(beta);
         case 2:
-            return run_counts_sorted(beta);
-        case 4:
             return run_gelman_rubin(beta);
         default:
             return -1;
@@ -22,7 +20,7 @@ int Metropolis_Glauber_Grid::run_exact(float beta)
     int steps = 0;
 
     Grid* grids = new Grid[colors];
-    for (color_t c = 0; c < colors; c++)
+    for (color_t c = 0; c < colors + 2; c++)
     {
         grids[c] = Grid(dim, colors);
         grids[c].set_all(c);
@@ -88,45 +86,6 @@ int Metropolis_Glauber_Grid::run_counts(float beta)
             }
         }
         steps += grids[0].size;
-    }
-
-    delete[] grids;
-    return steps;
-}
-
-int Metropolis_Glauber_Grid::run_counts_sorted(float beta)
-{
-    int steps = 0;
-
-    Grid* grids = new Grid[colors + 1];
-    for (color_t c = 0; c < colors + 1; c++)
-    {
-        grids[c] = Grid(dim, colors);
-
-        if (c == colors)
-            grids[c].chessboard();
-        else
-            grids[c].set_all(c);
-    }
-
-    int index;
-    color_t color;
-    float rand;
-
-    while (counts_diff(grids, colors + 1, counts_diff_sorted))
-    {
-        for (int i = 0; i < grids[0].size; i++)
-        {
-            index = rand_index(i_generator);
-            color = rand_color(c_generator);
-            rand = rand_prob(p_generator);
-
-            for (color_t c = 0; c < colors + 1; c++)
-            {
-                flip(grids[c], beta, index, color, rand);
-            }
-        }
-        steps += size;
     }
 
     delete[] grids;
