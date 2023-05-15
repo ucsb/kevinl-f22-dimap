@@ -2,6 +2,21 @@
 
 int Metropolis_Glauber_Grid::run(float beta)
 {
+    switch(mixer)
+    {
+        case 0:
+            return run_exact(beta);
+        case 1:
+            return run_counts(beta);
+        case 2:
+            return run_counts_sorted(beta);
+        default:
+            return -1;
+    }
+}
+
+int Metropolis_Glauber_Grid::run_exact(float beta)
+{
     int steps = 0;
 
     Grid* grids = new Grid[colors];
@@ -14,12 +29,48 @@ int Metropolis_Glauber_Grid::run(float beta)
     int index;
     color_t color;
     float rand;
-    std::mt19937 i_generator{std::random_device{}()};
-    std::mt19937 c_generator{std::random_device{}()};
-    std::mt19937 p_generator{std::random_device{}()};
-    std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
-    std::uniform_int_distribution<> rand_color(0, grids[0].colors - 1);
-    std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
+
+    bool diff = true;
+    while (diff)
+    {
+        for (int i = 0; i < grids[0].size; i++)
+        {
+            index = rand_index(i_generator);
+            color = rand_color(c_generator);
+            rand = rand_prob(p_generator);
+
+            for (color_t c = 0; c < colors; c++)
+            {
+                flip(grids[c], beta, index, color, rand);
+            }
+        }
+        steps += grids[0].size;
+
+        diff = false;
+        for (color_t c = 1; c < colors; c++)
+        {
+            diff = (diff || (grids[0] != grids[c]));
+        }
+    }
+
+    delete[] grids;
+    return steps;
+}
+
+int Metropolis_Glauber_Grid::run_counts(float beta)
+{
+    int steps = 0;
+
+    Grid* grids = new Grid[colors];
+    for (color_t c = 0; c < colors; c++)
+    {
+        grids[c] = Grid(dim, colors);
+        grids[c].set_all(c);
+    }
+
+    int index;
+    color_t color;
+    float rand;
 
     while (counts_diff(grids, colors))
     {
@@ -41,7 +92,46 @@ int Metropolis_Glauber_Grid::run(float beta)
     return steps;
 }
 
-void Metropolis_Glauber_Grid::run_counts(float beta, std::ofstream& os)
+int Metropolis_Glauber_Grid::run_counts_sorted(float beta)
+{
+    int steps = 0;
+
+    Grid* grids = new Grid[colors + 1];
+    for (color_t c = 0; c < colors + 1; c++)
+    {
+        grids[c] = Grid(dim, colors);
+
+        if (c == colors)
+            grids[c].chessboard();
+        else
+            grids[c].set_all(c);
+    }
+
+    int index;
+    color_t color;
+    float rand;
+
+    while (counts_diff(grids, colors + 1, counts_diff_sorted))
+    {
+        for (int i = 0; i < grids[0].size; i++)
+        {
+            index = rand_index(i_generator);
+            color = rand_color(c_generator);
+            rand = rand_prob(p_generator);
+
+            for (color_t c = 0; c < colors + 1; c++)
+            {
+                flip(grids[c], beta, index, color, rand);
+            }
+        }
+        steps += size;
+    }
+
+    delete[] grids;
+    return steps;
+}
+
+void Metropolis_Glauber_Grid::log_counts(float beta, std::ofstream& os)
 {
     int steps = 0;
 
@@ -55,12 +145,6 @@ void Metropolis_Glauber_Grid::run_counts(float beta, std::ofstream& os)
     int index;
     color_t color;
     float rand;
-    std::mt19937 i_generator{std::random_device{}()};
-    std::mt19937 c_generator{std::random_device{}()};
-    std::mt19937 p_generator{std::random_device{}()};
-    std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
-    std::uniform_int_distribution<> rand_color(0, grids[0].colors - 1);
-    std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
 
     while (counts_diff(grids, colors))
     {
@@ -126,13 +210,6 @@ int Metropolis_CFTP_Grid::run(float beta)
         grids[c] = Grid(dim, 2);
         grids[c].set_all(c);
     }
-
-    std::mt19937 i_generator{std::random_device{}()};
-    std::mt19937 c_generator{std::random_device{}()};
-    std::mt19937 p_generator{std::random_device{}()};
-    std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
-    std::uniform_int_distribution<> rand_color(0, grids[0].colors - 1);
-    std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
 
     indices.push_back(rand_index(i_generator));
     colors.push_back(rand_color(c_generator));
