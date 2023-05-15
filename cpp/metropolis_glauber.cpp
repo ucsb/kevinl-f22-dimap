@@ -409,12 +409,6 @@ int Metropolis_Glauber_Complete::run(float beta)
     int index;
     color_t color;
     float rand;
-    std::mt19937 i_generator{std::random_device{}()};
-    std::mt19937 c_generator{std::random_device{}()};
-    std::mt19937 p_generator{std::random_device{}()};
-    std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
-    std::uniform_int_distribution<> rand_color(0, grids[0].colors - 1);
-    std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
 
     while (counts_diff(grids, colors))
     {
@@ -428,7 +422,7 @@ int Metropolis_Glauber_Complete::run(float beta)
                 flip(grids[c], beta_scaled, index, color, rand);
             }
         }
-        steps += grids[0].size;
+        steps += size;
     }
 
     delete[] grids;
