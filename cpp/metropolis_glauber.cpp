@@ -10,6 +10,8 @@ int Metropolis_Glauber_Grid::run(float beta)
             return run_counts(beta);
         case 2:
             return run_counts_sorted(beta);
+        case 4:
+            return run_gelman_rubin(beta);
         default:
             return -1;
     }
@@ -129,6 +131,166 @@ int Metropolis_Glauber_Grid::run_counts_sorted(float beta)
 
     delete[] grids;
     return steps;
+}
+
+int Metropolis_Glauber_Grid::run_gelman_rubin(float beta)
+{
+    long* sample_sums = new long[colors];
+    std::fill(sample_sums, sample_sums + colors, 0);
+    float* sample_means = new float[colors];
+    float means_avg = 0.0;
+    float vars_avg = 0.0;
+    float means_var = 0.0;
+    int steps = 0;
+    int samples = 0;
+
+    std::vector<std::vector<int>> mags(colors, std::vector<int>());
+
+    float rhat = 2;
+
+    Grid* grids = new Grid[colors];
+
+    for (color_t c = 0; c < colors; c++)
+    {
+        grids[c] = Grid(dim, colors);
+        grids[c].set_all(c);
+    }
+
+    long burn_in = 0;
+
+    // print_grid_array(grids, colors);
+
+    while (rhat > 1.2)
+    {
+        means_avg = 0;
+        vars_avg = 0;
+
+        for (int i = 0; i < grids[0].size; i++)
+        {
+            int index = rand_index(i_generator);
+            color_t color = rand_color(c_generator);
+            float rand = rand_prob(p_generator);
+
+            for (color_t c = 0; c < colors; c++)
+            {
+                flip(grids[c], beta, index, color, rand);
+
+                if (burn_in++ > 100)
+                {
+                    int mag = *(std::max_element(grids[c].counts, grids[c].counts + colors));
+
+                    // printf("chain %d mag %d\n", c, mag);
+
+                    mags[c].push_back(mag);
+                    sample_sums[c] += mag;
+                    samples = (int)(mags[c].size());
+
+                    // Calculate sample mean
+                    sample_means[c] = sample_sums[c] / (float)(samples);
+
+                    printf("chain %d sample mean %f\n", c, sample_means[c]);
+
+                    // Sample variance (about sample mean)
+                    float sample_var = 0.0;
+                    for (int i = 0; i < samples; i++)
+                    {
+                        float diff = mags[c][i] - sample_means[c];
+                        // printf("chain %d %d %f diff %f\n", c, mags[c][i], sample_means[c], diff);
+                        sample_var += (diff * diff);
+                    }
+
+                    printf("chain %d var %f\n", c, sample_var);
+
+                    sample_var = sample_var / (samples - 1);
+                    means_avg += sample_means[c];
+                    vars_avg += sample_var;
+                }
+            }
+        }
+
+        steps += size;
+
+        if (samples < 2)
+            continue;
+
+        // Average of chain means
+        means_avg = means_avg / colors;
+
+        // printf("means_avg %f\n", means_avg);
+
+        // Average of chain variances (W)
+        vars_avg = vars_avg / colors;
+
+        // printf("vars_avg %f\n", vars_avg);
+
+        for (color_t c = 0; c < colors; c++)
+        {
+            float diff = sample_means[c] - means_avg;
+            means_var += (diff * diff);
+        }
+
+        // Variance of chain means around joint mean (B/L)
+        means_var = means_var / (colors - 1);
+
+        // printf("means_var %f\n", means_var);
+
+        rhat = std::sqrt((((float)(samples - 1) / samples * vars_avg) + ((colors + 1) / ((float)colors)) * means_var) / vars_avg);
+        printf("new rhat %f\n", rhat);
+
+        // print_grid_array(grids, colors);
+        // if (x++ == 10) exit(1);
+    }
+
+    exit(1);
+    delete[] grids;
+    delete[] sample_means;
+    delete[] sample_sums;
+
+    return steps;
+}
+
+int Metropolis_Glauber_Grid::run_mag(float beta, int max_steps)
+{
+    int steps = 0;
+
+    Grid* grids = new Grid[colors];
+    for (color_t c = 0; c < colors; c++)
+    {
+        grids[c] = Grid(dim, colors);
+        grids[c].set_all(c);
+    }
+
+    int index;
+    color_t color;
+    float rand;
+
+    bool diff = true;
+    while (diff && steps < max_steps)
+    {
+        for (int i = 0; i < grids[0].size; i++)
+        {
+            index = rand_index(i_generator);
+            color = rand_color(c_generator);
+            rand = rand_prob(p_generator);
+
+            for (color_t c = 0; c < colors; c++)
+            {
+                flip(grids[c], beta, index, color, rand);
+            }
+        }
+        steps += grids[0].size;
+
+        diff = false;
+        for (color_t c = 1; c < colors; c++)
+        {
+            diff = (diff || (grids[0] != grids[c]));
+        }
+    }
+
+    int mag = *(std::max_element(grids[0].counts, grids[0].counts + colors));
+
+    delete[] grids;
+    return mag;
 }
 
 void Metropolis_Glauber_Grid::log_counts(float beta, std::ofstream& os)

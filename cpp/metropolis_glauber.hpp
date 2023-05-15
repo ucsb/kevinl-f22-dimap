@@ -5,13 +5,15 @@
 class Metropolis_Glauber_Grid : public Chain {
 public:
     Metropolis_Glauber_Grid() : Metropolis_Glauber_Grid(1, 2) {}
-    Metropolis_Glauber_Grid(int dim, color_t colors) : Metropolis_Glauber_Grid(1, 2, 0) {}
+    Metropolis_Glauber_Grid(int dim, color_t colors) : Metropolis_Glauber_Grid(dim, colors, 0) {}
     Metropolis_Glauber_Grid(int dim, color_t colors, int mixer) : Chain(dim, colors), mixer(mixer) {}
     ~Metropolis_Glauber_Grid() = default;
     virtual int run(float beta) override;
     int run_exact(float beta);
     int run_counts(float beta);
     int run_counts_sorted(float beta);
+    int run_gelman_rubin(float beta);
+    int run_mag(float beta, int max_steps);
     void log_counts(float beta, std::ofstream& os);
     void flip(Grid& g, float beta, int index, color_t new_color, float rand);
 protected:
