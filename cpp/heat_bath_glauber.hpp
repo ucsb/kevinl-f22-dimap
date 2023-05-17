@@ -9,6 +9,11 @@ public:
     ~Heat_Bath_Glauber_Grid() = default;
     virtual int run(float beta) override;
     void flip(Grid& g, float beta, int index, float rand);
+private:
+    std::mt19937 i_generator{std::random_device{}()};
+    std::mt19937 p_generator{std::random_device{}()};
+    std::uniform_real_distribution<float> rand_prob{0.0, 1.0};
+    std::uniform_int_distribution<> rand_index{0, size - 1};
 };
 
 class Heat_Bath_CFTP_Grid: public Heat_Bath_Glauber_Grid

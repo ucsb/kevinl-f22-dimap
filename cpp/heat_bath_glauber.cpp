@@ -3,33 +3,39 @@
 int Heat_Bath_Glauber_Grid::run(float beta)
 {
     int steps = 0;
+    int chains = colors + 1;
 
-    Grid* grids = new Grid[colors];
+    Grid* grids = new Grid[chains];
     for (color_t c = 0; c < colors; c++)
     {
         grids[c] = Grid(dim, colors);
         grids[c].set_all(c);
     }
+    grids[colors] = Grid(dim, colors);
+    grids[colors].rand();
 
     int index;
     float rand;
-    std::mt19937 i_generator{std::random_device{}()};
-    std::mt19937 p_generator{std::random_device{}()};
-    std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
-    std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
 
-    while (counts_diff(grids, colors))
+    bool diff = true;
+    while (diff)
     {
         for (int i = 0; i < grids[0].size; i++)
         {
             index = rand_index(i_generator);
             rand = rand_prob(p_generator);
-            for (color_t c = 0; c < colors; c++)
+            for (color_t c = 0; c < chains; c++)
             {
                 flip(grids[c], beta, index, rand);
             }
         }
         steps += grids[0].size;
+
+        diff = false;
+        for (int i = 1; i < chains; i++)
+        {
+            diff |= (grids[0] != grids[i]);
+        }
     }
 
     delete[] grids;
