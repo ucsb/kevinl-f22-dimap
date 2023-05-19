@@ -18,42 +18,55 @@ int Metropolis_Glauber_Grid::run(float beta)
 int Metropolis_Glauber_Grid::run_exact(float beta)
 {
     int steps = 0;
+    int chains = colors + 1;
 
-    Grid* grids = new Grid[colors];
-    for (color_t c = 0; c < colors + 2; c++)
+    Lattice* lattices = new Lattice[chains];
+    for (color_t c = 0; c < colors; c++)
     {
-        grids[c] = Grid(dim, colors);
-        grids[c].set_all(c);
+        lattices[c] = Lattice(dim, colors);
+        lattices[c].set_all(c);
     }
+    lattices[colors] = Lattice(dim, colors);
+    lattices[colors].rand();
 
     int index;
     color_t color;
     float rand;
 
+    accept_probs = new float[9];
+    for (int i = 0; i < 9; i++)
+    {
+        accept_probs[i] = std::min(1.0, exp((i - 4) * beta));
+    }
+
     bool diff = true;
     while (diff)
     {
-        for (int i = 0; i < grids[0].size; i++)
+        for (int i = 0; i < colors * size; i++)
         {
             index = rand_index(i_generator);
             color = rand_color(c_generator);
             rand = rand_prob(p_generator);
 
-            for (color_t c = 0; c < colors; c++)
+            for (color_t c = 0; c < chains; c++)
             {
-                flip(grids[c], beta, index, color, rand);
+                flip(lattices[c], beta, index, color, rand);
             }
         }
-        steps += grids[0].size;
+        steps += size;
 
         diff = false;
-        for (color_t c = 1; c < colors; c++)
+        for (color_t c = 1; c < chains; c++)
         {
-            diff = (diff || (grids[0] != grids[c]));
+            if (lattices[0] != lattices[c])
+            {
+                diff = true;
+            }
         }
     }
 
-    delete[] grids;
+    delete[] accept_probs;
+    delete[] lattices;
     return steps;
 }
 
@@ -316,6 +329,19 @@ void Metropolis_Glauber_Grid::flip(Grid& g, float beta, int index, color_t new_c
         g.set(index, new_color);
 
     delete[] sums;
+}
+
+void Metropolis_Glauber_Grid::flip(Lattice& l, float& beta, int& index, color_t& new_color, float& rand)
+{
+    color_t old_color = l.graph[index];
+
+    if (old_color != new_color)
+    {
+        int mchrome_before = 0, mchrome_after = 0;
+        l.sum_neighbors_fast(index, old_color, new_color, mchrome_before, mchrome_after);
+        if (rand <= accept_probs[4 + mchrome_after - mchrome_before])
+            l.set(index, new_color);
+    }
 }
 
 int Metropolis_CFTP_Grid::run(float beta)

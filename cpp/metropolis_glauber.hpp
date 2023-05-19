@@ -15,8 +15,10 @@ public:
     int run_mag(float beta, int max_steps);
     void log_counts(float beta, std::ofstream& os);
     void flip(Grid& g, float beta, int index, color_t new_color, float rand);
+    void flip(Lattice& l, float& beta, int& index, color_t& new_color, float& rand);
 protected:
     int mixer;
+    float* accept_probs;
     std::mt19937 i_generator{std::random_device{}()};
     std::mt19937 c_generator{std::random_device{}()};
     std::mt19937 p_generator{std::random_device{}()};
