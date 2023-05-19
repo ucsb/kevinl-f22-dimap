@@ -33,7 +33,6 @@ int Metropolis_Glauber_Grid::run_exact(float beta)
     color_t color;
     float rand;
 
-    accept_probs = new float[9];
     for (int i = 0; i < 9; i++)
     {
         accept_probs[i] = std::min(1.0, exp((i - 4) * beta));
@@ -65,7 +64,6 @@ int Metropolis_Glauber_Grid::run_exact(float beta)
         }
     }
 
-    delete[] accept_probs;
     delete[] lattices;
     return steps;
 }
@@ -221,15 +219,23 @@ int Metropolis_Glauber_Grid::run_gelman_rubin(float beta)
     return steps;
 }
 
-int Metropolis_Glauber_Grid::run_mag(float beta, int max_steps)
+void Metropolis_Glauber_Grid::run_mag(float beta, int max_steps, int* mags)
 {
     int steps = 0;
+    int chains = colors + 1;
 
-    Grid* grids = new Grid[colors];
+    Lattice* lattices = new Lattice[chains];
     for (color_t c = 0; c < colors; c++)
     {
-        grids[c] = Grid(dim, colors);
-        grids[c].set_all(c);
+        lattices[c] = Lattice(dim, colors);
+        lattices[c].set_all(c);
+    }
+    lattices[colors] = Lattice(dim, colors);
+    lattices[colors].rand();
+
+    for (int i = 0; i < 9; i++)
+    {
+        accept_probs[i] = std::min(1.0, exp((i - 4) * beta));
     }
 
     int index;
@@ -239,30 +245,35 @@ int Metropolis_Glauber_Grid::run_mag(float beta, int max_steps)
     bool diff = true;
     while (diff && steps < max_steps)
     {
-        for (int i = 0; i < grids[0].size; i++)
+        for (int i = 0; i < size; i++)
         {
             index = rand_index(i_generator);
             color = rand_color(c_generator);
             rand = rand_prob(p_generator);
 
-            for (color_t c = 0; c < colors; c++)
+            for (int c = 0; c < chains; c++)
             {
-                flip(grids[c], beta, index, color, rand);
+                flip(lattices[c], beta, index, color, rand);
             }
         }
-        steps += grids[0].size;
+        steps += size;
 
         diff = false;
-        for (color_t c = 1; c < colors; c++)
+        for (int c = 1; c < chains; c++)
         {
-            diff = (diff || (grids[0] != grids[c]));
+            if (lattices[0] != lattices[c])
+            {
+                diff = true;
+            }
         }
     }
 
-    int mag = *(std::max_element(grids[0].counts, grids[0].counts + colors));
+    for (int c = 0; c < chains; c++)
+    {
+        mags[c] = *(std::max_element(lattices[c].counts, lattices[c].counts + colors));
+    }
 
-    delete[] grids;
-    return mag;
+    delete[] lattices;
 }
 
 void Metropolis_Glauber_Grid::log_counts(float beta, std::ofstream& os)
