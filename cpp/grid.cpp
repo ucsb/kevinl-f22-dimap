@@ -48,10 +48,9 @@ void Grid::rand() {
     std::mt19937 c_generator{std::random_device{}()};
     std::uniform_int_distribution<> rand_color(0, colors - 1);
 
-    std::fill(counts, counts + colors, 0);
+    set_all(0);
     for (int i = 0; i < size; i++) {
-        graph[i] = rand_color(c_generator);
-        counts[graph[i]]++;
+        set(i, rand_color(c_generator));
     }
 }
 
@@ -109,30 +108,75 @@ bool Grid::operator!=(const Grid& other) {
     return !(*this == other);
 }
 
-bool counts_diff(const Grid& g1, const Grid& g2)
+Lattice::Lattice() : Lattice(1, 2) {}
+
+Lattice::Lattice(int dim, color_t colors) : Lattice(dim, dim, colors) {}
+
+Lattice::Lattice(int w, int h, color_t colors) : Grid(w, h, colors)
 {
-    if (g1.colors != g2.colors)
-        return true;
-    for (color_t c = 0; c < g1.colors; c++)
+    neighbors = new int*[size];
+    for (int i = 0; i < size; i++)
     {
-        if (g1.counts[c] != g2.counts[c])
-        {
-            return true;
-        }
+        neighbors[i] = new int[4];
+
+        int prior_rows = i / w * w;
+        neighbors[i][0] = mod(i + w, size);
+        neighbors[i][1] = mod(i - w, size);
+        neighbors[i][2] = prior_rows + mod(i - 1, w);
+        neighbors[i][3] = prior_rows + mod(i + 1, w);
     }
-    return false;
 }
 
-bool counts_diff(const Grid grids[], int size) {
-    for (int i = 0; i < size - 1; i++)
+Lattice::~Lattice()
+{
+    for (int i = 0; i < size; i++)
     {
-        for (int j = i + 1; j < size; j++)
+        delete[] neighbors[i];
+    }
+    delete[] neighbors;
+}
+
+void Lattice::sum_neighbors_fast(int& index, color_t& c1, color_t& c2, int& sum1, int& sum2) const
+{
+    color_t neighbor_color;
+    for (int n = 0; n < 4; n++)
+    {
+        neighbor_color = graph[neighbors[index][n]];
+        if (neighbor_color == c1)
         {
-            if (counts_diff(grids[i], grids[j]))
-                return true;
+            sum1 += 1;
+        }
+        else if (neighbor_color == c2)
+        {
+            sum2 += 1;
         }
     }
-    return false;
+}
+
+Lattice& Lattice::operator=(const Lattice& other)
+{
+    for (int i = 0; i < this->size; i++)
+    {
+        delete[] this->neighbors[i];
+    }
+    this->w = other.w;
+    this->h = other.w;
+    this->size = other.size;
+    this->colors = other.colors;
+    delete[] this->graph;
+    delete[] this->counts;
+    delete[] this->neighbors;
+    this->graph = new color_t[this->size];
+    this->counts = new int[this->colors];
+    this->neighbors = new int*[this->size];
+    memcpy(this->graph, other.graph, sizeof(color_t) * this->size);
+    memcpy(this->counts, other.counts, sizeof(int) * this->colors);
+    for (int i = 0; i < this->size; i++)
+    {
+        this->neighbors[i] = new int[4];
+        memcpy(this->neighbors[i], other.neighbors[i], sizeof(int) * 4);
+    }
+    return *this;
 }
 
 void sum_neighbors(const Grid& g, int index, int sums[])
@@ -142,37 +186,6 @@ void sum_neighbors(const Grid& g, int index, int sums[])
     sums[g.graph[mod(index - g.w, g.size)]]++;
     sums[g.graph[prior_rows + mod(index - 1, g.w)]]++;
     sums[g.graph[prior_rows + mod(index + 1, g.w)]]++;
-}
-
-void print_grid_array(const Grid grids[], int size) {
-    print_grid_array(std::cout, grids, size);
-}
-
-void print_grid_array(std::ostream& os, const Grid grids[], int size) {
-    int max_w = 0, max_h = 0, grid_w, grid_h;
-    for (int i = 0; i < size; i++) {
-        if (grids[i].w > max_w) max_w = grids[i].w;
-        if (grids[i].w > max_h) max_h = grids[i].h;
-    }
-
-    for (int h = 0; h < max_h; h++) {
-        for (int i = 0; i < size; i++) {
-            grid_w = grids[i].w;
-            grid_h = grids[i].h;
-            for (int w = 0; w < max_w; w++) {
-                if (w < grid_w && h < grid_h) {
-                    os << (int)(grids[i].graph[h * grid_w + w]) << ' ';
-                }
-            }
-            os << ' ';
-        }
-        os << '\n';
-    }
-
-    for (int i = 0; i < size; i++) {
-        os << "grid " << &(grids[i]) << " (graph " << (void*) grids[i].graph << ") ";
-        grids[i].print_counts();
-    }
 }
 
 bool tot_mag(const Grid& g1, const Grid& g2) {
