@@ -392,13 +392,16 @@ int Metropolis_CFTP_Grid::run(float beta)
 int Metropolis_Glauber_Complete::run(float beta)
 {
     int steps = 0;
+    int chains = colors + 1;
 
-    Grid* grids = new Grid[colors];
+    Grid* grids = new Grid[chains];
     for (color_t c = 0; c < colors; c++)
     {
         grids[c] = Grid(dim, colors);
         grids[c].set_all(c);
     }
+    grids[colors] = Grid(dim, colors);
+    grids[colors].rand();
 
     float beta_scaled = -1 * log(1 - (2 * beta / grids[0].size));
 
@@ -406,19 +409,29 @@ int Metropolis_Glauber_Complete::run(float beta)
     color_t color;
     float rand;
 
-    while (counts_diff(grids, colors))
+    bool diff = true;
+    while (diff)
     {
-        for (int i = 0; i < grids[0].size; i++)
+        for (int i = 0; i < size; i++)
         {
             index = rand_index(i_generator);
             color = rand_color(c_generator);
             rand = rand_prob(p_generator);
-            for (color_t c = 0; c < colors; c++)
+            for (color_t c = 0; c < chains; c++)
             {
                 flip(grids[c], beta_scaled, index, color, rand);
             }
         }
         steps += size;
+
+        diff = false;
+        for (int i = 1; i < chains; i++)
+        {
+            if (grids[0] != grids[i])
+            {
+                diff = true;
+            }
+        }
     }
 
     delete[] grids;
@@ -462,7 +475,7 @@ int Metropolis_Glauber_Complete::run_mag(float beta, int max_steps)
     return max;
 }
 
-void Metropolis_Glauber_Complete::flip(Grid& g, float beta, int index, color_t new_color, float rand)
+void Metropolis_Glauber_Complete::flip(Grid& g, float& beta, int& index, color_t& new_color, float& rand)
 {
     color_t old_color = g.graph[index];
     float prob_accept;

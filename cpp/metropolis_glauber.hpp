@@ -41,7 +41,7 @@ public:
     ~Metropolis_Glauber_Complete() = default;
     virtual int run(float beta) override;
     int run_mag(float beta, int max_steps);
-    void flip(Grid& g, float beta, int index, color_t new_color, float rand);
+    void flip(Grid& g, float& beta, int& index, color_t& new_color, float& rand);
 protected:
     std::mt19937 i_generator{std::random_device{}()};
     std::mt19937 c_generator{std::random_device{}()};
