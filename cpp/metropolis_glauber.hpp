@@ -40,7 +40,7 @@ public:
     Metropolis_Glauber_Complete(int dim, color_t colors) : Chain(dim, colors) {}
     ~Metropolis_Glauber_Complete() = default;
     virtual int run(float beta) override;
-    int run_mag(float beta, int max_steps);
+    void run_mag(float beta, int max_steps, int* mags);
     void flip(Grid& g, float& beta, int& index, color_t& new_color, float& rand);
 protected:
     std::mt19937 i_generator{std::random_device{}()};

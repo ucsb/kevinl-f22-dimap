@@ -438,16 +438,19 @@ int Metropolis_Glauber_Complete::run(float beta)
     return steps;
 }
 
-int Metropolis_Glauber_Complete::run_mag(float beta, int max_steps)
+void Metropolis_Glauber_Complete::run_mag(float beta, int max_steps, int* mags)
 {
     int steps = 0;
+    int chains = colors + 1;
 
-    Grid* grids = new Grid[colors];
+    Grid* grids = new Grid[chains];
     for (color_t c = 0; c < colors; c++)
     {
         grids[c] = Grid(dim, colors);
         grids[c].set_all(c);
     }
+    grids[colors] = Grid(dim, colors);
+    grids[colors].rand();
 
     float beta_scaled = -1 * log(1 - (2 * beta / grids[0].size));
 
@@ -455,24 +458,37 @@ int Metropolis_Glauber_Complete::run_mag(float beta, int max_steps)
     color_t color;
     float rand;
 
-    while (counts_diff(grids, colors) && steps < max_steps)
+    bool diff = true;
+    while (diff && steps < max_steps)
     {
-        for (int i = 0; i < grids[0].size; i++)
+        for (int i = 0; i < size; i++)
         {
             index = rand_index(i_generator);
             color = rand_color(c_generator);
             rand = rand_prob(p_generator);
-            for (color_t c = 0; c < colors; c++)
+            for (int c = 0; c < chains; c++)
             {
                 flip(grids[c], beta_scaled, index, color, rand);
             }
         }
         steps += size;
+
+        diff = false;
+        for (int c = 1; c < chains; c++)
+        {
+            if (grids[0] != grids[c])
+            {
+                diff = true;
+            }
+        }
     }
 
-    int max = *(std::max_element(grids[0].counts, grids[0].counts + colors));
+    for (int c = 0; c < chains; c++)
+    {
+        mags[c] = *(std::max_element(grids[c].counts, grids[c].counts + colors));
+    }
+
     delete[] grids;
-    return max;
 }
 
 void Metropolis_Glauber_Complete::flip(Grid& g, float& beta, int& index, color_t& new_color, float& rand)
