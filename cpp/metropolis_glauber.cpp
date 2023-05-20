@@ -362,31 +362,36 @@ int Metropolis_CFTP_Grid::run(float beta)
     std::vector<float> rands;
     std::vector<color_t> colors;
 
-    Grid grids[2];
+    Lattice lattices[2];
     for (int c = 0; c < 2; c++)
     {
-        grids[c] = Grid(dim, 2);
-        grids[c].set_all(c);
+        lattices[c] = Lattice(dim, 2);
+        lattices[c].set_all(c);
+    }
+
+    for (int i = 0; i < 9; i++)
+    {
+        accept_probs[i] = std::min(1.0, exp((i - 4) * beta));
     }
 
     indices.push_back(rand_index(i_generator));
     colors.push_back(rand_color(c_generator));
     rands.push_back(rand_prob(p_generator));
 
-    while (!tot_mag(grids[0], grids[1]))
+    while (lattices[0] != lattices[1])
     {
         end = indices.size() - 1;
         for (int i = end; i >= 0; i--)
         {
             for (int c = 0; c < 2; c++)
-                flip(grids[c], beta, indices[i], colors[i], rands[i]);
+                flip(lattices[c], beta, indices[i], colors[i], rands[i]);
             indices.push_back(rand_index(i_generator));
             colors.push_back(rand_color(c_generator));
             rands.push_back(rand_prob(p_generator));
         }
     }
 
-    return (int)indices.size();
+    return (int)(indices.size());
 }
 
 int Metropolis_Glauber_Complete::run(float beta)
@@ -554,7 +559,7 @@ int Metropolis_CFTP_Complete::run(float beta)
     colors.push_back(rand_color(c_generator));
     rands.push_back(rand_prob(p_generator));
 
-    while (!tot_mag(grids[0], grids[1]))
+    while (grids[0] != grids[1])
     {
         end = indices.size() - 1;
         for (int i = end; i >= 0; i--)
