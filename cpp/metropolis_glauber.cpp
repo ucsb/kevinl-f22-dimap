@@ -41,7 +41,7 @@ int Metropolis_Glauber_Grid::run_exact(double beta)
     bool diff = true;
     while (diff)
     {
-        for (int i = 0; i < colors * size; i++)
+        for (int i = 0; i < size; i++)
         {
             index = rand_index(i_generator);
             color = rand_color(c_generator);
