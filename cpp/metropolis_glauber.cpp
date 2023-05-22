@@ -513,18 +513,18 @@ void Metropolis_Glauber_Complete::flip(Grid& g, double beta, int index, color_t 
         other sites which create edges with the new vertex
         */
 
-        int mchrome_new = g.counts[new_color];
+        int mchrome_gained = g.counts[new_color];
 
         /*
         If the site had edges to other sites, there the number of monochromatic
         edges will go down by <count> - 1 (one is the current site itself)
         */
 
-        int mchrome_old = 0;
+        int mchrome_lost = 0;
         if (g.counts[old_color] > 1)
-            mchrome_old = 1 - g.counts[old_color];
+            mchrome_lost = 1 - g.counts[old_color];
 
-        prob_accept = std::min(1.0, exp((mchrome_old + mchrome_new) * beta));
+        prob_accept = std::min(1.0, exp((mchrome_lost + mchrome_gained) * beta));
     }
 
     // Accept new state with calculated probability and update grid
