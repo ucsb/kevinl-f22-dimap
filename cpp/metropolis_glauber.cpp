@@ -1,6 +1,6 @@
 #include "metropolis_glauber.hpp"
 
-int Metropolis_Glauber_Grid::run(float beta)
+int Metropolis_Glauber_Grid::run(double beta)
 {
     switch(mixer)
     {
@@ -15,7 +15,7 @@ int Metropolis_Glauber_Grid::run(float beta)
     }
 }
 
-int Metropolis_Glauber_Grid::run_exact(float beta)
+int Metropolis_Glauber_Grid::run_exact(double beta)
 {
     int steps = 0;
     int chains = colors + 1;
@@ -31,7 +31,7 @@ int Metropolis_Glauber_Grid::run_exact(float beta)
 
     int index;
     color_t color;
-    float rand;
+    double rand;
 
     for (int i = 0; i < 9; i++)
     {
@@ -68,7 +68,7 @@ int Metropolis_Glauber_Grid::run_exact(float beta)
     return steps;
 }
 
-int Metropolis_Glauber_Grid::run_counts(float beta)
+int Metropolis_Glauber_Grid::run_counts(double beta)
 {
     int steps = 0;
 
@@ -81,7 +81,7 @@ int Metropolis_Glauber_Grid::run_counts(float beta)
 
     int index;
     color_t color;
-    float rand;
+    double rand;
 
     while (counts_diff(grids, colors))
     {
@@ -103,20 +103,20 @@ int Metropolis_Glauber_Grid::run_counts(float beta)
     return steps;
 }
 
-int Metropolis_Glauber_Grid::run_gelman_rubin(float beta)
+int Metropolis_Glauber_Grid::run_gelman_rubin(double beta)
 {
     long* sample_sums = new long[colors];
     std::fill(sample_sums, sample_sums + colors, 0);
-    float* sample_means = new float[colors];
-    float means_avg = 0.0;
-    float vars_avg = 0.0;
-    float means_var = 0.0;
+    double* sample_means = new double[colors];
+    double means_avg = 0.0;
+    double vars_avg = 0.0;
+    double means_var = 0.0;
     int steps = 0;
     int samples = 0;
 
     std::vector<std::vector<int>> mags(colors, std::vector<int>());
 
-    float rhat = 2;
+    double rhat = 2;
 
     Grid* grids = new Grid[colors];
 
@@ -139,7 +139,7 @@ int Metropolis_Glauber_Grid::run_gelman_rubin(float beta)
         {
             int index = rand_index(i_generator);
             color_t color = rand_color(c_generator);
-            float rand = rand_prob(p_generator);
+            double rand = rand_prob(p_generator);
 
             for (color_t c = 0; c < colors; c++)
             {
@@ -156,15 +156,15 @@ int Metropolis_Glauber_Grid::run_gelman_rubin(float beta)
                     samples = (int)(mags[c].size());
 
                     // Calculate sample mean
-                    sample_means[c] = sample_sums[c] / (float)(samples);
+                    sample_means[c] = sample_sums[c] / (double)(samples);
 
                     printf("chain %d sample mean %f\n", c, sample_means[c]);
 
                     // Sample variance (about sample mean)
-                    float sample_var = 0.0;
+                    double sample_var = 0.0;
                     for (int i = 0; i < samples; i++)
                     {
-                        float diff = mags[c][i] - sample_means[c];
+                        double diff = mags[c][i] - sample_means[c];
                         // printf("chain %d %d %f diff %f\n", c, mags[c][i], sample_means[c], diff);
                         sample_var += (diff * diff);
                     }
@@ -195,7 +195,7 @@ int Metropolis_Glauber_Grid::run_gelman_rubin(float beta)
 
         for (color_t c = 0; c < colors; c++)
         {
-            float diff = sample_means[c] - means_avg;
+            double diff = sample_means[c] - means_avg;
             means_var += (diff * diff);
         }
 
@@ -204,7 +204,7 @@ int Metropolis_Glauber_Grid::run_gelman_rubin(float beta)
 
         // printf("means_var %f\n", means_var);
 
-        rhat = std::sqrt((((float)(samples - 1) / samples * vars_avg) + ((colors + 1) / ((float)colors)) * means_var) / vars_avg);
+        rhat = std::sqrt((((double)(samples - 1) / samples * vars_avg) + ((colors + 1) / ((double)colors)) * means_var) / vars_avg);
         printf("new rhat %f\n", rhat);
 
         // print_grid_array(grids, colors);
@@ -219,7 +219,7 @@ int Metropolis_Glauber_Grid::run_gelman_rubin(float beta)
     return steps;
 }
 
-void Metropolis_Glauber_Grid::run_mag(float beta, int max_steps, int* mags)
+void Metropolis_Glauber_Grid::run_mag(double beta, int max_steps, int* mags)
 {
     int steps = 0;
     int chains = colors + 1;
@@ -240,7 +240,7 @@ void Metropolis_Glauber_Grid::run_mag(float beta, int max_steps, int* mags)
 
     int index;
     color_t color;
-    float rand;
+    double rand;
 
     bool diff = true;
     while (diff && steps < max_steps)
@@ -276,7 +276,7 @@ void Metropolis_Glauber_Grid::run_mag(float beta, int max_steps, int* mags)
     delete[] lattices;
 }
 
-void Metropolis_Glauber_Grid::log_counts(float beta, std::ofstream& os)
+void Metropolis_Glauber_Grid::log_counts(double beta, std::ofstream& os)
 {
     int steps = 0;
 
@@ -289,7 +289,7 @@ void Metropolis_Glauber_Grid::log_counts(float beta, std::ofstream& os)
 
     int index;
     color_t color;
-    float rand;
+    double rand;
 
     while (counts_diff(grids, colors))
     {
@@ -321,7 +321,7 @@ void Metropolis_Glauber_Grid::log_counts(float beta, std::ofstream& os)
     delete[] grids;
 }
 
-void Metropolis_Glauber_Grid::flip(Grid& g, float beta, int index, color_t new_color, float rand)
+void Metropolis_Glauber_Grid::flip(Grid& g, double beta, int index, color_t new_color, double rand)
 {
     // Count neighbors of each color for the given vertex
     int* sums = new int[colors];
@@ -333,7 +333,7 @@ void Metropolis_Glauber_Grid::flip(Grid& g, float beta, int index, color_t new_c
     int mchrome_after = sums[new_color];
 
     // Calculate acceptance probability
-    float prob_accept = std::min(1.0, exp((mchrome_after - mchrome_before) * beta));
+    double prob_accept = std::min(1.0, exp((mchrome_after - mchrome_before) * beta));
 
     // Accept new state with calculated probability and update grid
     if (rand <= prob_accept)
@@ -342,7 +342,7 @@ void Metropolis_Glauber_Grid::flip(Grid& g, float beta, int index, color_t new_c
     delete[] sums;
 }
 
-void Metropolis_Glauber_Grid::flip(Lattice& l, float& beta, int& index, color_t& new_color, float& rand)
+void Metropolis_Glauber_Grid::flip(Lattice& l, double& beta, int& index, color_t& new_color, double& rand)
 {
     color_t old_color = l.graph[index];
 
@@ -355,11 +355,11 @@ void Metropolis_Glauber_Grid::flip(Lattice& l, float& beta, int& index, color_t&
     }
 }
 
-int Metropolis_CFTP_Grid::run(float beta)
+int Metropolis_CFTP_Grid::run(double beta)
 {
     int end;
     std::vector<int> indices;
-    std::vector<float> rands;
+    std::vector<double> rands;
     std::vector<color_t> colors;
 
     Lattice lattices[2];
@@ -394,7 +394,7 @@ int Metropolis_CFTP_Grid::run(float beta)
     return (int)(indices.size());
 }
 
-int Metropolis_Glauber_Complete::run(float beta)
+int Metropolis_Glauber_Complete::run(double beta)
 {
     int steps = 0;
     int chains = colors + 1;
@@ -408,11 +408,11 @@ int Metropolis_Glauber_Complete::run(float beta)
     grids[colors] = Grid(dim, colors);
     grids[colors].rand();
 
-    float beta_scaled = -1 * log(1 - (2 * beta / grids[0].size));
+    double beta_scaled = -1 * log(1 - (2 * beta / grids[0].size));
 
     int index;
     color_t color;
-    float rand;
+    double rand;
 
     bool diff = true;
     while (diff)
@@ -443,7 +443,7 @@ int Metropolis_Glauber_Complete::run(float beta)
     return steps;
 }
 
-void Metropolis_Glauber_Complete::run_mag(float beta, int max_steps, int* mags)
+void Metropolis_Glauber_Complete::run_mag(double beta, int max_steps, int* mags)
 {
     int steps = 0;
     int chains = colors + 1;
@@ -457,11 +457,11 @@ void Metropolis_Glauber_Complete::run_mag(float beta, int max_steps, int* mags)
     grids[colors] = Grid(dim, colors);
     grids[colors].rand();
 
-    float beta_scaled = -1 * log(1 - (2 * beta / grids[0].size));
+    double beta_scaled = -1 * log(1 - (2 * beta / grids[0].size));
 
     int index;
     color_t color;
-    float rand;
+    double rand;
 
     bool diff = true;
     while (diff && steps < max_steps)
@@ -496,10 +496,10 @@ void Metropolis_Glauber_Complete::run_mag(float beta, int max_steps, int* mags)
     delete[] grids;
 }
 
-void Metropolis_Glauber_Complete::flip(Grid& g, float& beta, int& index, color_t& new_color, float& rand)
+void Metropolis_Glauber_Complete::flip(Grid& g, double beta, int index, color_t new_color, double rand)
 {
     color_t old_color = g.graph[index];
-    float prob_accept;
+    double prob_accept;
 
     // Calculate acceptance probability
     if (old_color == new_color)
@@ -532,11 +532,11 @@ void Metropolis_Glauber_Complete::flip(Grid& g, float& beta, int& index, color_t
         g.set(index, new_color);
 }
 
-int Metropolis_CFTP_Complete::run(float beta)
+int Metropolis_CFTP_Complete::run(double beta)
 {
     int end;
     std::vector<int> indices;
-    std::vector<float> rands;
+    std::vector<double> rands;
     std::vector<color_t> colors;
 
     Grid grids[2];
@@ -546,14 +546,14 @@ int Metropolis_CFTP_Complete::run(float beta)
         grids[c].set_all(c);
     }
 
-    float beta_scaled = -1 * log(1 - (2 * beta / grids[0].size));
+    double beta_scaled = -1 * log(1 - (2 * beta / grids[0].size));
 
     std::mt19937 i_generator{std::random_device{}()};
     std::mt19937 c_generator{std::random_device{}()};
     std::mt19937 p_generator{std::random_device{}()};
     std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
     std::uniform_int_distribution<> rand_color(0, grids[0].colors - 1);
-    std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
+    std::uniform_real_distribution<double> rand_prob(0.0, 1.0);
 
     indices.push_back(rand_index(i_generator));
     colors.push_back(rand_color(c_generator));

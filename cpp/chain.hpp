@@ -12,7 +12,7 @@ public:
         this->colors = colors;
     }
     virtual ~Chain() {}
-    virtual int run(float beta) = 0;
+    virtual int run(double beta) = 0;
     virtual Chain& operator=(const Chain& other) {
         this->dim = other.dim;
         this->colors = other.colors;
