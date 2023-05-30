@@ -165,43 +165,43 @@ int Heat_Bath_Glauber_Complete::run(double beta)
         grids[c] = Grid(dim, colors);
         grids[c].set_all(c);
     }
+
     grids[colors] = Grid(dim, colors);
-    grids[colors].rand();
+    for (int i = 0; i < size; i++)
+    {
+        grids[colors].set(i, rand_color(generator));
+    }
 
     double beta_scaled = -1 * log(1 - (2 * beta / size));
+    double* exps = new double[size + 1];
+    for (int i = 0; i < size + 1; i++)
+    {
+        exps[i] = exp(beta_scaled * i);
+    }
 
     int index;
     double rand;
 
-    bool diff = true;
-    while (diff)
+    while (diff(grids, chains))
     {
         for (int i = 0; i < size; i++)
         {
-            index = rand_index(i_generator);
-            rand = rand_prob(p_generator);
+            index = rand_index(generator);
+            rand = rand_prob(generator);
             for (color_t c = 0; c < chains; c++)
             {
-                flip(grids[c], beta_scaled, index, rand);
+                flip(grids[c], index, rand, exps);
             }
         }
         steps += size;
-
-        diff = false;
-        for (int c = 1; c < chains; c++)
-        {
-            if (grids[0] != grids[c])
-            {
-                diff = true;
-            }
-        }
     }
 
+    delete[] exps;
     delete[] grids;
     return steps;
 }
 
-void Heat_Bath_Glauber_Complete::flip(Grid& g, double beta, int index, double rand)
+void Heat_Bath_Glauber_Complete::flip(Grid& g, int index, double rand, double* exps)
 {
     int my_spin = g.graph[index];
     double* weights = new double[g.colors];
@@ -210,15 +210,15 @@ void Heat_Bath_Glauber_Complete::flip(Grid& g, double beta, int index, double ra
     // Configuration weight calculations
     for (color_t c = 0; c < g.colors; c++)
     {
-        sum += exp(beta * (g.counts[c] - (my_spin == c)));
+        sum += exps[g.counts[c] - (my_spin == c)];
         weights[c] = sum;
     }
 
-    // Normalize weights and randomly set a color
-    sum = 1.0 / sum;
+    // Randomly set a color
+    double scaled_rand = rand * sum;
     for (color_t c = 0; c < g.colors; c++)
     {
-        if (rand <= (weights[c] * sum)) {
+        if (scaled_rand <= weights[c]) {
             g.set(index, c);
             break;
         }
@@ -241,27 +241,30 @@ int Heat_Bath_CFTP_Complete::run(double beta)
         grids[c].set_all(c);
     }
 
-    double beta_scaled = -1 * log(1 - (2 * beta / grids[0].size));
+    double beta_scaled = -1 * log(1.0 - (2.0 * beta / size));
+    double* exps = new double[size + 1];
+    for (int i = 0; i < size + 1; i++)
+    {
+        exps[i] = exp(beta_scaled * i);
+    }
 
-    std::mt19937 i_generator{std::random_device{}()};
-    std::mt19937 p_generator{std::random_device{}()};
-    std::uniform_real_distribution<double> rand_prob(0.0, 1.0);
-    std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
+    indices.push_back(rand_index(generator));
+    rands.push_back(rand_prob(generator));
 
-    indices.push_back(rand_index(i_generator));
-    rands.push_back(rand_prob(p_generator));
-
-    while (!tot_mag(grids[0], grids[1]))
+    while (diff(grids, 2))
     {
         end = indices.size() - 1;
         for (int i = end; i >= 0; i--)
         {
             for (int c = 0; c < 2; c++)
-                flip(grids[c], beta_scaled, indices[i], rands[i]);
-            indices.push_back(rand_index(i_generator));
-            rands.push_back(rand_prob(p_generator));
+            {
+                flip(grids[c], indices[i], rands[i], exps);
+            }
+            indices.push_back(rand_index(generator));
+            rands.push_back(rand_prob(generator));
         }
     }
 
+    delete[] exps;
     return (int)indices.size();
 }
