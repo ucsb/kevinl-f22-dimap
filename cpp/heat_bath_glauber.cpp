@@ -12,72 +12,41 @@ int Heat_Bath_Glauber_Grid::run(double beta)
         lattices[c].set_all(c);
     }
     lattices[colors] = Lattice(dim, colors);
-    lattices[colors].rand();
+    for (int i = 0; i < size; i++)
+    {
+        lattices[colors].set(i, rand_color(generator));
+    }
 
     int index;
     double rand;
 
-    bool diff = true;
-    while (diff)
+    // Precompute exp with beta
+    double* exps =  new double[5];
+    for (int i = 0; i < 5; i++)
+    {
+        exps[i] = exp(beta * i);
+    }
+
+    while (diff(lattices, chains))
     {
         for (int i = 0; i < size; i++)
         {
-            index = rand_index(i_generator);
-            rand = rand_prob(p_generator);
+            index = rand_index(generator);
+            rand = rand_prob(generator);
             for (color_t c = 0; c < chains; c++)
             {
-                flip(lattices[c], beta, index, rand);
+                flip(lattices[c], index, rand, exps);
             }
         }
         steps += size;
-
-        diff = false;
-        for (int c = 1; c < chains; c++)
-        {
-            if (lattices[0] != lattices[c])
-            {
-                diff = true;
-                break;
-            }
-        }
     }
 
+    delete[] exps;
     delete[] lattices;
     return steps;
 }
 
-void Heat_Bath_Glauber_Grid::flip(Grid& g, double beta, int index, double rand)
-{
-    // Count neighbors of each color for the given vertex
-    int* sums = new int[g.colors];
-    std::fill(sums, sums + g.colors, 0);
-    sum_neighbors(g, index, sums);
-
-    // Calculate probability weight denominators
-    double* weights = new double[g.colors];
-    double sum = 0.0;
-    for (color_t c = 0; c < g.colors; c++)
-    {
-        sum += exp(beta * sums[c]);
-        weights[c] = sum;
-    }
-
-    // Normalize weights and randomly set a new color
-    sum = 1.0 / sum;
-    for (color_t c = 0; c < g.colors; c++)
-    {
-        if (rand < (weights[c] * sum))
-        {
-            g.set(index, c);
-            break;
-        }
-    }
-
-    delete[] weights;
-    delete[] sums;
-}
-
-void Heat_Bath_Glauber_Grid::flip(Lattice& l, double beta, int index, double rand)
+void Heat_Bath_Glauber_Grid::flip(Lattice& l, int index, double rand, double* exps)
 {
     // Count neighbors of each color for the given vertex
     int* sums = new int[colors];
@@ -89,16 +58,15 @@ void Heat_Bath_Glauber_Grid::flip(Lattice& l, double beta, int index, double ran
     double sum = 0.0;
     for (color_t c = 0; c < colors; c++)
     {
-        sum += exp(beta * sums[c]);
+        sum += exps[sums[c]];
         weights[c] = sum;
     }
 
-    // Normalize weights and randomly set a new color
-    sum = 1.0 / sum;
+    // Randomly set a new color
+    double scaled_rand = rand * sum;
     for (color_t c = 0; c < colors; c++)
     {
-        if (rand < (weights[c] * sum))
-        {
+        if (scaled_rand <= weights[c]) {
             l.set(index, c);
             break;
         }
@@ -115,11 +83,11 @@ int Heat_Bath_CFTP_Grid::run(double beta)
     std::vector<double> rands;
     std::vector<color_t> colors;
 
-    Grid grids[2];
+    Lattice lattices[2];
     for (int c = 0; c < 2; c++)
     {
-        grids[c] = Grid(dim, 2);
-        grids[c].set_all(c);
+        lattices[c] = Lattice(dim, 2);
+        lattices[c].set_all(c);
     }
 
     // Precompute probabilities of flipping positive
@@ -129,23 +97,20 @@ int Heat_Bath_CFTP_Grid::run(double beta)
         probs[i] = exp(beta * i) / (exp(beta * i) + exp(beta * (4 - i)));
     }
 
-    std::mt19937 i_generator{std::random_device{}()};
-    std::mt19937 p_generator{std::random_device{}()};
-    std::uniform_int_distribution<> rand_index(0, grids[0].size - 1);
-    std::uniform_real_distribution<double> rand_prob(0.0, 1.0);
+    indices.push_back(rand_index(generator));
+    rands.push_back(rand_prob(generator));
 
-    indices.push_back(rand_index(i_generator));
-    rands.push_back(rand_prob(p_generator));
-
-    while (!tot_mag(grids[0], grids[1]))
+    while (diff(lattices, 2))
     {
         end = indices.size() - 1;
         for (int i = end; i >= 0; i--)
         {
             for (int c = 0; c < 2; c++)
-                flip(grids[c], beta, indices[i], rands[i]);
-            indices.push_back(rand_index(i_generator));
-            rands.push_back(rand_prob(p_generator));
+            {
+                flip(lattices[c], indices[i], rands[i], probs);
+            }
+            indices.push_back(rand_index(generator));
+            rands.push_back(rand_prob(generator));
         }
     }
 
@@ -153,6 +118,17 @@ int Heat_Bath_CFTP_Grid::run(double beta)
     return (int)indices.size();
 }
 
+void Heat_Bath_CFTP_Grid::flip(Lattice& l, int index, double rand, double* probs)
+{
+    // Count neighbors of each color for the given vertex
+    int* sums = new int[colors];
+    std::fill(sums, sums + colors, 0);
+    l.sum_neighbors_fast(index, sums);
+
+    l.set(index, (rand <= probs[sums[1]]));
+
+    delete[] sums;
+}
 
 int Heat_Bath_Glauber_Complete::run(double beta)
 {
