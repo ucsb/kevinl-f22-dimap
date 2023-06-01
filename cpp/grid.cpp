@@ -19,13 +19,15 @@ Grid::~Grid() {
     delete[] counts;
 }
 
-void Grid::set(int index, color_t new_color) {
-    color_t old_color = this->graph[index];
-    if (old_color != new_color) {
-        this->counts[old_color]--;
-        this->counts[new_color]++;
+void Grid::set(int index, color_t new_color)
+{
+    color_t old_color = graph[index];
+    if (old_color != new_color)
+    {
+        counts[old_color]--;
+        counts[new_color]++;
+        graph[index] = new_color;
     }
-    this->graph[index] = new_color;
 }
 
 void Grid::set_all(color_t color) {
@@ -94,7 +96,8 @@ Grid& Grid::operator=(const Grid& other) {
     return *this;
 }
 
-bool Grid::operator==(const Grid& other) {
+bool Grid::operator==(const Grid& other) const
+{
     if (this->w != other.w || this->h != other.w) return false;
     if (this->colors != other.colors) return false;
     for (int i = 0; i < this->size; i++) {
@@ -104,7 +107,8 @@ bool Grid::operator==(const Grid& other) {
     return true;
 }
 
-bool Grid::operator!=(const Grid& other) {
+bool Grid::operator!=(const Grid& other) const
+{
     return !(*this == other);
 }
 
@@ -150,6 +154,14 @@ void Lattice::sum_neighbors_fast(int& index, color_t& c1, color_t& c2, int& sum1
         {
             sum2 += 1;
         }
+    }
+}
+
+void Lattice::sum_neighbors_fast(int& index, int* sums) const
+{
+    for (int n = 0; n < 4; n++)
+    {
+        sums[graph[neighbors[index][n]]] += 1;
     }
 }
 
@@ -227,73 +239,6 @@ bool mag_diff(const Grid grids[], int len) {
     for (int i = 0; i < len - 1; i++) {
         for (int j = i + 1; j < len; j++) {
             if (mag_diff(grids[i], grids[j]))
-                return true;
-        }
-    }
-    return false;
-}
-
-bool counts_diff(const Grid& g1, const Grid& g2)
-{
-    if (g1.colors != g2.colors)
-        return true;
-    for (color_t c = 0; c < g1.colors; c++)
-    {
-        if (g1.counts[c] != g2.counts[c])
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool counts_diff_sorted(const Grid& g1, const Grid& g2)
-{
-    if (g1.colors != g2.colors)
-        return true;
-
-    bool return_me = false;
-    int* counts1 = new int[g1.colors];
-    int* counts2 = new int[g2.colors];
-    memcpy(counts1, g1.counts, sizeof(int) * g1.colors);
-    memcpy(counts2, g2.counts, sizeof(int) * g2.colors);
-
-    std::sort(counts1, counts1 + g1.colors);
-    std::sort(counts2, counts2 + g2.colors);
-
-    for (int c = 0; c < g1.colors; c++) {
-        if (counts1[c] != counts2[c]) {
-            return_me = true;
-            break;
-        }
-    }
-
-    delete[] counts1;
-    delete[] counts2;
-
-    return return_me;
-}
-
-bool counts_diff(const Grid grids[], int size)
-{
-    for (int i = 0; i < size - 1; i++)
-    {
-        for (int j = i + 1; j < size; j++)
-        {
-            if (counts_diff(grids[i], grids[j]))
-                return true;
-        }
-    }
-    return false;
-}
-
-bool counts_diff(const Grid grids[], int size, bool (*counts_diff)(const Grid&, const Grid&))
-{
-    for (int i = 0; i < size - 1; i++)
-    {
-        for (int j = i + 1; j < size; j++)
-        {
-            if (counts_diff(grids[i], grids[j]))
                 return true;
         }
     }

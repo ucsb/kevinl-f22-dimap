@@ -21,8 +21,8 @@ public:
     void print_counts() const;
     void print_counts(std::ostream& os) const;
     Grid& operator=(const Grid& other);
-    bool operator==(const Grid& other);
-    bool operator!=(const Grid& other);
+    bool operator==(const Grid& other) const;
+    bool operator!=(const Grid& other) const;
 
     int w, h, size;
     int colors;
@@ -39,6 +39,7 @@ public:
     Lattice(int w, int h, color_t colors);
     ~Lattice();
     void sum_neighbors_fast(int& index, color_t& c1, color_t& c2, int& sum1, int& sum2) const;
+    void sum_neighbors_fast(int& index, int* sums) const;
     Lattice& operator=(const Lattice& other);
 
     int** neighbors;
@@ -52,13 +53,105 @@ bool mag_diff(const Grid& g1, const Grid& g2);
 
 bool mag_diff(const Grid grids[], int len);
 
-bool counts_diff(const Grid& g1, const Grid& g2);
+template <typename T>
+bool counts_diff(const T& g1, const T& g2)
+{
+    if (g1.colors != g2.colors)
+        return true;
+    for (color_t c = 0; c < g1.colors; c++)
+    {
+        if (g1.counts[c] != g2.counts[c])
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
-bool counts_diff_sorted(const Grid& g1, const Grid& g2);
+template <typename T>
+bool counts_diff_sorted(const T grids[], int size)
+{
+    for (int i = 0; i < size - 1; i++)
+    {
+        for (int j = i + 1; j < size; j++)
+        {
+            if (counts_diff_sorted(grids[i], grids[j]))
+                return true;
+        }
+    }
+    return false;
+}
 
-bool counts_diff(const Grid grids[], int size);
+template <typename T>
+bool counts_diff_sorted(const T& g1, const T& g2)
+{
+    if (g1.colors != g2.colors)
+        return true;
 
-bool counts_diff(const Grid grids[], int size, bool (*counts_diff)(const Grid&, const Grid&));
+    bool return_me = false;
+    int* counts1 = new int[g1.colors];
+    int* counts2 = new int[g2.colors];
+    memcpy(counts1, g1.counts, sizeof(int) * g1.colors);
+    memcpy(counts2, g2.counts, sizeof(int) * g2.colors);
+
+    std::sort(counts1, counts1 + g1.colors);
+    std::sort(counts2, counts2 + g2.colors);
+
+    for (int c = 0; c < g1.colors; c++)
+    {
+        if (counts1[c] != counts2[c])
+        {
+            return_me = true;
+            break;
+        }
+    }
+
+    delete[] counts1;
+    delete[] counts2;
+
+    return return_me;
+}
+
+template <typename T>
+bool counts_diff(const T grids[], int size)
+{
+    for (int i = 0; i < size - 1; i++)
+    {
+        for (int j = i + 1; j < size; j++)
+        {
+            if (counts_diff(grids[i], grids[j]))
+                return true;
+        }
+    }
+    return false;
+}
+
+template <typename T>
+bool counts_diff(const T grids[], int size, bool (*counts_diff)(const T&, const T&))
+{
+    for (int i = 0; i < size - 1; i++)
+    {
+        for (int j = i + 1; j < size; j++)
+        {
+            if (counts_diff(grids[i], grids[j]))
+                return true;
+        }
+    }
+    return false;
+}
+
+template <typename T>
+bool grids_diff(const T grids[], int size)
+{
+    for (int i = 1; i < size; i++)
+    {
+        if (grids[0] != grids[i])
+        {
+            return true;
+        }
+    }
+    return false;
+}
 
 template <typename T>
 void print_grid_array(const T grids[], int size)
