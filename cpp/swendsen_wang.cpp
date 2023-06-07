@@ -1,94 +1,89 @@
 #include "swendsen_wang.hpp"
 
-int Swendsen_Wang_Grid::run(float beta)
+int Swendsen_Wang_Grid::run(double beta)
 {
     int steps = 0;
 
-    Grid grids[2];
-    grids[0] = Grid(dim, colors);
-    grids[1] = Grid(dim, colors);
-    grids[0].set_all(0);
-    grids[1].chessboard();
+    Lattice lattices[2];
+    lattices[0] = Lattice(dim, colors);
+    lattices[1] = Lattice(dim, colors);
+    lattices[0].set_all(0);
+    lattices[1].chessboard();
 
-    std::mt19937 c_generator{std::random_device{}()};
-    std::mt19937 p_generator{std::random_device{}()};
-    std::uniform_int_distribution<> rand_color(0, grids[0].colors - 1);
-    std::uniform_real_distribution<float> rand_prob(0.0, 1.0);
-
-    color_t* recolors = new color_t[grids[0].size];
-    float** probs = new float*[grids[0].size];
-    for (int i = 0; i < grids[0].size; i++)
+    color_t* recolors = new color_t[size];
+    int** keep = new int*[size];
+    for (int i = 0; i < size; i++)
     {
-        probs[i] = new float[4];
+        keep[i] = new int[4];
     }
+    double keep_edge = 1.0 - exp(-1.0 * beta);
 
-    while (counts_diff(grids[0], grids[1]))
+    while (diff(lattices, 2))
     {
-        for (int i = 0; i < grids[0].size; i++)
+        for (int i = 0; i < size; i++)
         {
-            recolors[i] = rand_color(c_generator);
-
-            for (int j = 0; j < 4; j++)
-            {
-                probs[i][j] = rand_prob(p_generator);
-            }
+            recolors[i] = rand_color(generator);
+            std::fill(keep[i], keep[i] + 4, -1);
         }
 
-        for (Grid& g : grids)
+        for (Lattice& l : lattices)
         {
-            flip(g, beta, recolors, probs);
+            flip(l, recolors, keep, keep_edge);
         }
         steps++;
     }
 
-    delete[] recolors;
-    for (int i = 0; i < grids[0].size; i++)
+    for (int i = 0; i < size; i++)
     {
-        delete[] probs[i];
+        delete[] keep[i];
     }
-    delete[] probs;
-
+    delete[] keep;
+    delete[] recolors;
     return steps;
 }
 
-void Swendsen_Wang_Grid::flip(Grid& g, float beta, color_t* recolors, float** probs)
+void Swendsen_Wang_Grid::flip(Lattice& l, color_t* recolors, int** keep, double keep_edge)
 {
-    StaticQ<int> q(g.size);
+    StaticQ<int> q(l.size);
     int index;
-    unsigned char old_color, new_color;
-    bool* visited = new bool[g.size];
-    std::fill(visited, visited + g.size, 0);
-    int dirs[4];
-    float keep_edge = exp(-1 * beta);
+    color_t old_color, new_color;
+    bool* visited = new bool[l.size];
+    std::fill(visited, visited + l.size, 0);
 
-    for (int i = 0; i < g.size; i++)
+    for (int i = 0; i < l.size; i++)
     {
         if (visited[i] == false)
         {
             visited[i] = true;
             q.push(i);
-            old_color = g.graph[i];
+            old_color = l.graph[i];
             new_color = recolors[i];
 
             while (q.get_size() > 0)
             {
                 index = *(q.pop());
-                g.set(index, new_color);
-
-                int prior_rows = index / g.w * g.w;
-                dirs[0] = mod(index - g.w, g.size); // top
-                dirs[1] = mod(index + g.w, g.size); // bottom
-                dirs[2] = prior_rows + mod(index - 1, g.w); // left
-                dirs[3] = prior_rows + mod(index + 1, g.w); // right
+                l.set(index, new_color);
 
                 int neighbor;
                 for (int j = 0; j < 4; j++)
                 {
-                    neighbor = dirs[j];
-                    if (visited[neighbor] == false && g.graph[neighbor] == old_color && (probs[index][j] > keep_edge))
+                    neighbor = l.neighbors[index][j];
+                    if (visited[neighbor] == false && l.graph[neighbor] == old_color)
                     {
-                        visited[neighbor] = true;
-                        q.push(neighbor);
+                        if (keep[index][j] < 0)
+                        {
+                            keep[index][j] = (rand_prob(generator) <= keep_edge);
+                            for (int k = 0; k < 4; k++)
+                            {
+                                if (l.neighbors[neighbor][k] == index)
+                                    keep[neighbor][k] = keep[index][j];
+                            }
+                        }
+                        if (keep[index][j])
+                        {
+                            visited[neighbor] = true;
+                            q.push(neighbor);
+                        }
                     }
                 }
             }
